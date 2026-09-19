@@ -1,0 +1,14 @@
+{
+  "name": "claudit",
+  "displayName": "Claudit",
+  "version": "0.0.0",
+  "description": "Audit, fix and build your Claude Code setup against Anthropic's documented guidance. Every change is explained in plain English and applied only with your approval.",
+  "author": {
+    "name": "brandoncox-commits",
+    "url": "https://github.com/brandoncox-commits"
+  },
+  "homepage": "https://github.com/brandoncox-commits/claudit",
+  "repository": "https://github.com/brandoncox-commits/claudit",
+  "license": "MIT",
+  "keywords": ["audit", "claude-code", "agents", "skills", "hooks", "permissions", "mcp", "best-practice"]
+}

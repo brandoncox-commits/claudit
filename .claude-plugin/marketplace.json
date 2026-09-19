@@ -1,0 +1,15 @@
+{
+  "name": "claudit",
+  "owner": {
+    "name": "brandoncox-commits",
+    "url": "https://github.com/brandoncox-commits"
+  },
+  "description": "Audit, fix and build your Claude Code setup against Anthropic's documented guidance.",
+  "plugins": [
+    {
+      "name": "claudit",
+      "source": "./plugins/claudit",
+      "description": "Reviews agents, skills, hooks, MCP servers, permission rules and settings against the official Claude Code docs, proposes plain-English fixes you approve one by one, and builds new agents and skills to the same standard."
+    }
+  ]
+}

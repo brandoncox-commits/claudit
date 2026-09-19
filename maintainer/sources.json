@@ -1,0 +1,84 @@
+{
+  "_comment": "Maps each canonical doc page to the Claudit files that depend on it. sha256 is the hash of the page's normalised markdown as of the last time the dependent files were verified against it; doc_watch.py opens a doc-drift issue when the live page no longer matches. Update a page's sha256 and verified date in the same release PR that re-verifies its dependents. A dependent file may still carry open claims, provided each is marked inline ([UNCONFIRMED] / [UNVERIFIED]); an unmarked unverified claim blocks the update. BASELINE NOTE: all 15 pages were re-verified claim by claim and re-baselined on 2026-09-19.",
+  "pages": {
+    "https://code.claude.com/docs/en/sub-agents.md": {
+      "sha256": "bc5cde1e31c0049ae254f0a65314d4d34072f94c15a173fe98cf52bcf0f553d0",
+      "verified": "2026-09-19",
+      "covers": ["skills/agent-builder", "agents/claudit-agents-reviewer", "agents/claudit-designer", "skills/permission-rules", "skills/plugin-builder", "agents/claudit-supply-chain-reviewer"]
+    },
+    "https://code.claude.com/docs/en/skills.md": {
+      "sha256": "5a2e0e2ee821fb7b79bff173358f48c036a2c9406a0446bc8292aa0221eee4af",
+      "verified": "2026-09-19",
+      "covers": ["skills/skill-builder", "agents/claudit-agents-reviewer", "agents/claudit-designer"]
+    },
+    "https://code.claude.com/docs/en/hooks.md": {
+      "sha256": "e0a14dcffd8299c22401f2ba18e577470f4ae25cb3dd6609a68160f1f2fbb390",
+      "verified": "2026-09-19",
+      "covers": ["skills/hooks-builder", "agents/claudit-config-reviewer", "skills/agent-builder"]
+    },
+    "https://code.claude.com/docs/en/hooks-guide.md": {
+      "sha256": "e388b1bb4c83d9773396a13ad0c70978b562ea40aefd297045475bbe5e7af41c",
+      "verified": "2026-09-19",
+      "covers": ["skills/hooks-builder", "agents/claudit-config-reviewer"]
+    },
+    "https://code.claude.com/docs/en/mcp.md": {
+      "sha256": "d872a8aded51160476e935bad371f10a06e31d244f23f3f4f28f057c0f0ca36e",
+      "verified": "2026-09-19",
+      "covers": ["skills/mcp-config", "agents/claudit-config-reviewer"]
+    },
+    "https://code.claude.com/docs/en/settings.md": {
+      "sha256": "319fe9cbd331bd3d88d7d0109ead58231c3bf00e0b1f042fd67bb355b27f7256",
+      "verified": "2026-09-19",
+      "covers": ["agents/claudit-config-reviewer", "skills/troubleshooting", "skills/permission-rules", "skills/audit"]
+    },
+    "https://code.claude.com/docs/en/permissions.md": {
+      "sha256": "eab3c45e44187c7be90a7566d21233835354237c9b41ac36906ea45114cc21cb",
+      "verified": "2026-09-19",
+      "covers": ["skills/permission-rules", "agents/claudit-permissions-reviewer"]
+    },
+    "https://code.claude.com/docs/en/permission-modes.md": {
+      "sha256": "581e2ab28eff24b699a8201d90468437aac16aa6108225646d5d8d41422f913d",
+      "verified": "2026-09-19",
+      "covers": ["skills/permission-rules", "skills/agent-builder", "agents/claudit-permissions-reviewer"]
+    },
+    "https://code.claude.com/docs/en/plugins.md": {
+      "sha256": "52d5190cb5bde72672723d01ba357f1d462393dd1c3f52f938938f2eb54ec107",
+      "verified": "2026-09-19",
+      "covers": ["skills/plugin-builder", "agents/claudit-supply-chain-reviewer"]
+    },
+    "https://code.claude.com/docs/en/plugins-reference.md": {
+      "sha256": "f0e0bed28ed0adca7d818232a0788607f62965f97f5d3234b884ca1b2b4b18fe",
+      "verified": "2026-09-19",
+      "covers": ["skills/plugin-builder", "skills/agent-builder", "agents/claudit-supply-chain-reviewer", "skills/about"]
+    },
+    "https://code.claude.com/docs/en/plugin-marketplaces.md": {
+      "sha256": "6564466c4d9d9e93a67ddbcd1781fe4cf73ec1aa06a41383eeb47f6637b0a689",
+      "verified": "2026-09-19",
+      "covers": ["skills/plugin-builder", "skills/about"]
+    },
+    "https://code.claude.com/docs/en/discover-plugins.md": {
+      "sha256": "2600fca633e0c31edd0ac5a0f8816e1fedee1f554c4c3ed6acc393966b2a1784",
+      "verified": "2026-09-19",
+      "covers": ["skills/plugin-builder", "skills/about"]
+    },
+    "https://code.claude.com/docs/en/output-styles.md": {
+      "sha256": "0ac762eddac12fd76edf7837f39b471c9fecb834f511319c89fa216f053b2512",
+      "verified": "2026-09-19",
+      "covers": ["skills/output-style-builder", "agents/claudit-config-reviewer", "skills/audit", "skills/permission-rules"]
+    },
+    "https://code.claude.com/docs/en/agent-teams.md": {
+      "sha256": "277e67df91e054c113b91fc4a42fe324d55da0f3da9df16cde5caf3276c6dbc1",
+      "verified": "2026-09-19",
+      "covers": ["skills/agent-teams"]
+    },
+    "https://code.claude.com/docs/en/troubleshooting.md": {
+      "sha256": "cf3af01fb7bfb78e5bd06b26d19c0e31ad1c52e423f1b9d2ec839eaadb574be6",
+      "verified": "2026-09-19",
+      "covers": ["skills/troubleshooting"]
+    }
+  },
+  "changelog": {
+    "url": "https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md",
+    "last_reviewed_version": "2.1.268"
+  }
+}

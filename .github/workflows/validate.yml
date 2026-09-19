@@ -1,0 +1,89 @@
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: checks
+    runs-on: ubuntu-latest
+    steps:
+      # Actions are pinned to commit SHAs, not moving tags: a tag can be repointed at new
+      # code by whoever controls the action's repo. The trailing comment records which
+      # release each SHA was, so upgrades stay readable.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+
+      # On a PR that changes shipped plugin files, the version must go up —
+      # otherwise users never receive the change.
+      - name: Work out base version
+        if: github.event_name == 'pull_request'
+        env:
+          # Never interpolate a GitHub expression straight into a shell script — pass it
+          # through the environment so its value can't be parsed as shell.
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet "origin/${BASE_REF}...HEAD" -- plugins/claudit; then
+            echo "No plugin files changed; version bump not required."
+          else
+            BASE=$(git show "origin/${BASE_REF}:plugins/claudit/.claude-plugin/plugin.json" \
+              | python -c "import json,sys; print(json.load(sys.stdin)['version'])")
+            # Fail loudly rather than exporting an empty BASE_VERSION, which the next step
+            # would read as "no bump required" — the check would silently pass.
+            if [ -z "$BASE" ]; then
+              echo "::error::Could not read the base version from plugin.json on $BASE_REF."
+              exit 1
+            fi
+            echo "BASE_VERSION=$BASE" >> "$GITHUB_ENV"
+            echo "Plugin files changed; version must exceed $BASE."
+          fi
+
+      # On the upstream repo the personal-data scan must actually run: fail loudly if
+      # the secret is missing. Forks (which don't receive secrets) skip this.
+      - name: Require LEAK_PATTERNS upstream
+        if: github.repository == 'brandoncox-commits/claudit' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+        env:
+          LEAK_PATTERNS: ${{ secrets.LEAK_PATTERNS }}
+        run: |
+          if [ -z "$LEAK_PATTERNS" ]; then
+            echo "::error::LEAK_PATTERNS secret is not set — the personal-data scan would be skipped."
+            exit 1
+          fi
+
+      - name: Repo checks
+        env:
+          # Comma-separated personal-data markers, stored as a repo secret so the
+          # list itself is never published.
+          LEAK_PATTERNS: ${{ secrets.LEAK_PATTERNS }}
+        run: |
+          if [ -n "${BASE_VERSION:-}" ]; then
+            python maintainer/check_repo.py --base-version "$BASE_VERSION"
+          else
+            python maintainer/check_repo.py
+          fi
+
+  plugin-validate:
+    name: plugin-validate
+    runs-on: ubuntu-latest
+    # Informational until confirmed that `claude plugin validate` runs in CI without
+    # authentication. Promote to a required check once it has passed on a real run.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+      - run: npm install -g @anthropic-ai/claude-code
+      - run: claude plugin validate plugins/claudit --strict
+      - run: claude plugin validate .
