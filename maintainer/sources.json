@@ -1,5 +1,5 @@
 {
-  "_comment": "Maps each canonical doc page to the Claudit files that depend on it. sha256 is the hash of the page's normalised markdown as of the last time the dependent files were verified against it; doc_watch.py opens a doc-drift issue when the live page no longer matches. Update a page's sha256 and verified date in the same release PR that re-verifies its dependents. A dependent file may still carry open claims, provided each is marked inline ([UNCONFIRMED] / [UNVERIFIED]); an unmarked unverified claim blocks the update. BASELINE NOTE: all 15 pages were re-verified claim by claim and re-baselined on 2026-09-19.",
+  "_comment": "Maps each canonical doc page to the Claudit files that depend on it. sha256 is the hash of the page's normalised markdown as of the last time the dependent files were verified against it; doc_watch.py opens a doc-drift issue when the live page no longer matches. Update a page's sha256 and verified date in the same release PR that re-verifies its dependents. A dependent file may still carry open claims, provided each is marked inline ([UNCONFIRMED] / [UNVERIFIED]); an unmarked unverified claim blocks the update. BASELINE NOTE: all 15 pages were re-verified claim by claim and re-baselined on 2026-09-19. /setup was added as a 16th page on 2026-09-20, baselined at that date, covering only the update commands that skills/troubleshooting cites from it — the rest of that page is not yet claim-checked.",
   "pages": {
     "https://code.claude.com/docs/en/sub-agents.md": {
       "sha256": "bc5cde1e31c0049ae254f0a65314d4d34072f94c15a173fe98cf52bcf0f553d0",
@@ -74,6 +74,11 @@
     "https://code.claude.com/docs/en/troubleshooting.md": {
       "sha256": "cf3af01fb7bfb78e5bd06b26d19c0e31ad1c52e423f1b9d2ec839eaadb574be6",
       "verified": "2026-09-19",
+      "covers": ["skills/troubleshooting"]
+    },
+    "https://code.claude.com/docs/en/setup.md": {
+      "sha256": "b4e5709f5a9554258e50343dc193815ad5888ce06d131fa4fe0e890f692e4a24",
+      "verified": "2026-09-20",
       "covers": ["skills/troubleshooting"]
     }
   },

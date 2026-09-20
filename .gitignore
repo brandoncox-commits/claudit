@@ -4,3 +4,7 @@ __pycache__/
 Thumbs.db
 .env
 .env.*
+
+# Scratch file holding release notes for `gh release create --notes-file`.
+# Written transiently during a ship; must never be committed.
+.release-notes.md
