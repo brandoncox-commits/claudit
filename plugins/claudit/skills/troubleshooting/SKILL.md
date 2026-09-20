@@ -13,7 +13,8 @@ Diagnostic patterns for Claude Code issues across skills, agents, MCP, hooks, an
 
 Verified on 2026-09-19 against code.claude.com/docs/en/troubleshooting, /settings and the
 pages each row concerns — 4 open claims, each marked **[UNCONFIRMED]** inline. Rows are
-starting hypotheses to confirm against the user's actual setup, not verdicts.
+starting hypotheses to confirm against the user's actual setup, not verdicts. The update
+commands under Diagnostic Commands were verified against /setup on 2026-09-20.
 
 ---
 
@@ -132,10 +133,24 @@ claude mcp get server-name      # MCP server details
 /reload-plugins                 # reload plugins without restart
 claude plugin validate <dir>    # validate a plugin
 claude --version                # check version
+claude doctor                   # read-only install + settings diagnostics
+claude update                   # apply a pending update now
 
 # `claude agents` opens the agent view for background sessions. [UNCONFIRMED]
 # It is NOT a listing of agent definitions.
 ```
+
+**Updating.** Native installs auto-update in the background; `claude update` applies one
+immediately. Homebrew, WinGet and the apt/dnf/apk packages do **not** auto-update by default.
+
+On an **npm** install, upgrade with:
+
+```bash
+npm install -g @anthropic-ai/claude-code@latest
+```
+
+Avoid `npm update -g` — it respects the semver range from the original install and may not
+move you to the newest release. Source: code.claude.com/docs/en/setup.
 
 ---
 

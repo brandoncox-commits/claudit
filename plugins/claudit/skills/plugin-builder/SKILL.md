@@ -13,8 +13,9 @@ user-invocable: false
 Patterns and standards for creating and distributing Claude Code plugins.
 
 Verified on 2026-09-19 against code.claude.com/docs/en/plugins, /plugins-reference,
-/plugin-marketplaces, /discover-plugins and /sub-agents — 1 open claim, marked **[UNCONFIRMED]**
-inline.
+/plugin-marketplaces, /discover-plugins and /sub-agents — 2 open claims, each marked
+**[UNCONFIRMED]** inline. The `/plugin` command list was re-checked against /discover-plugins
+on 2026-09-20.
 
 ---
 
@@ -222,12 +223,23 @@ Plugin `source` can be a relative path, `github` (`repo`, optional `ref`/`sha`),
 marketplace is added from git or a local directory, not from a direct JSON URL.
 
 ```bash
+/plugin                                     # open the plugin manager UI (menu — ignores arguments)
 /plugin marketplace add owner/repo
 /plugin install my-plugin@my-marketplace
+/plugin uninstall my-plugin@my-marketplace
+/plugin disable my-plugin@my-marketplace
+/plugin enable my-plugin@my-marketplace
 /plugin marketplace update my-marketplace
 /plugin marketplace list
 /plugin marketplace remove my-marketplace   # also uninstalls its plugins
 ```
+
+`/plugin` on its own opens an interactive, tabbed panel in the terminal CLI. Cycle the tabs
+with **Tab**, or **Shift+Tab** to go backward. Settings that live only in that panel — such as
+enabling auto-update for a marketplace — have to be changed by navigating it.
+**[UNCONFIRMED]** The docs describe `/plugin` only as interactive, and do not say what a bare
+`/plugin` does with trailing arguments; observed behaviour is that they are ignored, so a
+setting cannot be changed by typing it as an argument.
 
 Install scopes: **User** (all your projects), **Project** (all collaborators — writes
 `.claude/settings.json`), **Local** (you, this repo only).

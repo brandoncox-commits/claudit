@@ -15,9 +15,15 @@ allowed-tools: Read, Grep, WebFetch(domain:raw.githubusercontent.com)
 2. WebFetch
    `https://raw.githubusercontent.com/brandoncox-commits/claudit/main/plugins/claudit/.claude-plugin/plugin.json`
    asking only for the `version` field. If it fails, say so and continue.
-3. Grep `${CLAUDE_PLUGIN_ROOT}/skills/*/SKILL.md` for lines containing `erified` to get
-   each reference's verification status. Show a small table: reference · status
-   (verified / partially verified / not yet audited) · date.
+3. Grep for lines containing `erified` to get each reference's verification status. Search
+   the directory `${CLAUDE_PLUGIN_ROOT}/skills` and do **not** pass a `*/SKILL.md` glob
+   alongside it — that combination can silently match nothing and make every reference look
+   unaudited. Search the directory, then keep only hits in a `SKILL.md`.
+   If the search returns no matches at all, treat that as a search failure, not as evidence
+   that the references are unverified: say the check could not be completed and why. Every
+   shipped reference carries a stamp, so zero matches always means the search was wrong.
+   Show a small table: reference · status (verified / partially verified / not yet audited) ·
+   date. Read the DATE from each stamp rather than assuming it matches the plugin version.
 4. Report:
 
 ```
