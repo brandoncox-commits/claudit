@@ -54,15 +54,18 @@ Most common: `PreToolUse` (block dangerous ops), `PostToolUse` (run lint/test af
 
 Others include `Setup`, `SessionStart`, `SessionEnd`, `PermissionRequest`,
 `PermissionDenied`, `UserPromptExpansion`, `MessageDisplay`, `PreModelSwitch` /
-`PostModelSwitch`, `PostCompact`, `FileChanged`, `CwdChanged`, `DirectoryAdded`,
-`ConfigChange`, and the worktree/elicitation events.
+`PostModelSwitch`, `PostCompact`, `PostToolBatch`, `StopFailure`, `InstructionsLoaded`,
+`FileChanged`, `CwdChanged`, `DirectoryAdded`, `ConfigChange`, and the
+worktree/elicitation events.
 
 Scoping: hooks in `settings.json` are session-wide and **do see subagents**. Hooks in
-agent frontmatter are scoped to that agent, **support all hook events** (a `Stop` hook
-there is auto-converted to `SubagentStop`), and require the containing folder to be
-trusted (v2.1.218+). **Plugin-shipped agents cannot declare frontmatter `hooks` at all** —
-but a plain agent `.md` file copied into `.claude/agents/` can, which is why downloaded
-agent files must be checked for this field.
+agent frontmatter are scoped to that agent and **support all hook events** (a `Stop` hook
+there is auto-converted to `SubagentStop`). **Only project-level subagent frontmatter
+hooks require the containing folder to be trusted (v2.1.218+)** — hooks from user-level
+subagents in `~/.claude/agents/` and from definitions passed via `--agents` run without
+that step. **Plugin-shipped agents cannot declare frontmatter `hooks` at all** — but a
+plain agent `.md` file copied into `.claude/agents/` can, which is why downloaded agent
+files must be checked for this field.
 
 ---
 
@@ -83,8 +86,9 @@ whose output carries `hookSpecificOutput.additionalContext` (see below).
 
 Default timeouts: `command`, `http`, `mcp_tool` 10 minutes (lowered to 30 seconds for
 `UserPromptSubmit`, `PreModelSwitch`, `PostModelSwitch`, and 10 seconds for
-`MessageDisplay`); `prompt` 30 seconds; `agent` 60 seconds. Override per hook with
-`timeout` (seconds).
+`MessageDisplay`); `prompt` 30 seconds; `agent` 60 seconds. **`SessionEnd` hooks of any
+type share a single 1.5-second budget instead**, raised to match a longer per-hook
+`timeout` up to 60 seconds. Override per hook with `timeout` (seconds).
 
 Only `command` hooks support asynchronous execution (via `async` / `asyncRewake`) —
 `http` and `mcp_tool` hooks have no async variant and always block.
@@ -101,13 +105,15 @@ decisions the most restrictive answer wins, in the order `deny`, `defer`, `ask`,
 |-----------|---------|
 | `0` | Allow. **Plain-text stdout goes to the debug log only and Claude never sees it** (JSON output is parsed instead — see "Adding context for Claude") — except for `UserPromptSubmit`, `UserPromptExpansion`, `SessionStart`, and `PostModelSwitch`, where plain-text stdout is added as context Claude can act on. stderr on exit 0 also goes to the debug log only |
 | `2` | **Block** the action. The blocking message is the JSON decision's `reason` when present, otherwise stderr |
-| Any other | Allow; non-blocking error. Note `exit 1` does **not** block, despite being the conventional Unix failure code |
+| Any other | Non-blocking for most events; the action proceeds. For events that use the standard decision model, valid JSON on stdout that passes schema validation still takes effect whatever the code (a JSON `deny` still denies); plain text, empty stdout, or JSON that fails validation is a non-blocking error. Exit 2 is the only code that blocks by code alone, and even a JSON `allow` cannot override it. `exit 1` does **not** block on its own. Exceptions: any non-zero exit from `WorktreeCreate` fails worktree creation whatever the JSON says, and from `WorktreeRemove` fails removal; events that discard hook output (e.g. `StopFailure`) ignore JSON on every code |
 
 Do not build an "informational" exit-0 hook expecting a **plain-text** message to reach
 Claude — for every event except `UserPromptSubmit`, `UserPromptExpansion`, `SessionStart`
 and `PostModelSwitch`, plain stdout is silently swallowed into the debug log. That covers
 plain text only: JSON `additionalContext` is a separate channel (below), and a `PreToolUse`
 or `PostToolUse` hook that uses it correctly does reach Claude.
+
+A gate that can't run fails open. A missing or non-executable script (shell exit 127), a crash, or a timeout is a non-blocking error and the tool call goes ahead, so a mistyped path leaves a policy hook silently disabled. After installing a blocking hook, trigger it once on purpose and confirm the block happens.
 
 ### Adding context for Claude
 
@@ -126,7 +132,7 @@ For `UserPromptSubmit`, return JSON with `additionalContext` **nested inside
 `additionalContext` is not limited to those four events. On `PostToolUse`, a hook that
 exits 0 and prints `{"hookSpecificOutput": {"hookEventName": "PostToolUse",
 "additionalContext": "..."}}` has that text appended to the tool result, where Claude sees
-it — the Agent SDK hooks page, which uses the same JSON format as command hooks: "For
+it. The Agent SDK hooks page, which uses the same JSON format as command hooks, says: "For
 `PostToolUse` hooks, you can set `additionalContext` to append information to the tool
 result" (https://code.claude.com/docs/en/agent-sdk/hooks). On `PreToolUse`, "Text from
 `additionalContext` is kept from every hook and passed to Claude together"
@@ -206,8 +212,9 @@ Observed shape for a `Read` call (values elided):
 }
 ```
 
-> **`duration_ms` is undocumented.** It is present at runtime on `PostToolUse` but absent
-> from the docs' common-fields table. Treat as real but unofficial.
+> `duration_ms` is now documented, though as a `PostToolUse`/`PostToolUseFailure`-specific
+> field rather than in the common-fields table: "Optional. Tool execution time in
+> milliseconds. Excludes time spent in permission prompts and PreToolUse hooks."
 
 > Some older third-party and example skills call this field `tool_result`. The runtime
 > says `tool_response`.
@@ -239,7 +246,7 @@ The field is `prompt` (not `message`, not `user_prompt`). `/docs/en/hooks-guide`
         "hooks": [
           {
             "type": "command",
-            "command": "jq -r '.tool_input.file_path' | xargs npx eslint --fix"
+            "command": "jq -r '.tool_input.file_path' | xargs -I{} npx eslint --fix -- \"{}\""
           }
         ]
       }
@@ -256,10 +263,30 @@ hooks:
     - matcher: "Edit"
       hooks:
         - type: command
-          command: "jq -r '.tool_input.file_path' | xargs python lint.py"
+          command: "jq -r '.tool_input.file_path' | xargs -I{} python lint.py \"{}\""
 ```
 
-### Plugin hooks.json (at plugin root)
+### Skill frontmatter (registered for the rest of the session once the skill is invoked)
+
+```yaml
+---
+name: secure-operations
+description: Perform operations with security checks
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "./scripts/security-check.sh"
+---
+```
+
+Unlike agent-frontmatter hooks, which are removed when that subagent finishes, skill
+hooks stay registered for the rest of the session once invoked — including turns after
+the skill's own turn. Add `once: true` on a hook to remove it after its first successful
+run.
+
+### Plugin `hooks/hooks.json` (in the plugin root, or inline in `plugin.json`)
 
 ```json
 {
@@ -270,7 +297,7 @@ hooks:
         "hooks": [
           {
             "type": "command",
-            "command": "jq -r '.tool_input.command' | grep -qE '^(rm|drop|delete)' && exit 2 || exit 0"
+            "command": "jq -r '.tool_input.command' | grep -qE 'rm -rf' && exit 2 || exit 0"
           }
         ]
       }
@@ -307,7 +334,7 @@ Without a matcher, a hook fires on every occurrence of its event.
     "matcher": "Edit|Write",
     "hooks": [{
       "type": "command",
-      "command": "jq -r '.tool_input.file_path' | xargs eslint --fix 2>/dev/null || true"
+      "command": "jq -r '.tool_input.file_path' | xargs -I{} eslint --fix -- \"{}\" 2>/dev/null || true"
     }]
   }]
 }
@@ -321,7 +348,7 @@ Without a matcher, a hook fires on every occurrence of its event.
     "matcher": "Bash",
     "hooks": [{
       "type": "command",
-      "command": "jq -r '.tool_input.command' | grep -qE '(rm -rf|DROP TABLE|force-push)' && { echo 'Blocked: dangerous command' >&2; exit 2; } || exit 0"
+      "command": "jq -r '.tool_input.command' | grep -qE '(rm -rf|DROP TABLE|git push( .*)? (--force|-f)( |$))' && { echo 'Blocked: dangerous command' >&2; exit 2; } || exit 0"
     }]
   }]
 }
@@ -378,8 +405,8 @@ output use `hookSpecificOutput.additionalContext`.
     "hooks": [{
       "type": "http",
       "url": "https://my-logger.example.com/events",
-      "method": "POST",
-      "headers": { "Authorization": "Bearer ${LOGGER_TOKEN}" }
+      "headers": { "Authorization": "Bearer ${LOGGER_TOKEN}" },
+      "allowedEnvVars": ["LOGGER_TOKEN"]
     }]
   }]
 }
@@ -391,7 +418,7 @@ output use `hookSpecificOutput.additionalContext`.
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| Hook never fires | Wrong event name | Check spelling; event names are case-sensitive |
+| Hook never fires | Wrong event name | Check spelling and match the docs' casing exactly (e.g. `PreToolUse`) |
 | Hook fires but doesn't block | Exit code not 2 | Use `exit 2` explicitly; `exit 1` doesn't block |
 | jq: field not found | Wrong JSON path | Print stdin first: `cat > /tmp/hook-debug.json` |
 | Command not found | Binary not in PATH | Use a full path |

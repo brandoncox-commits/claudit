@@ -12,7 +12,7 @@ user-invocable: false
 
 Patterns and standards for creating Claude Code skills (Agent Skills open standard).
 
-Verified against code.claude.com/docs/en/skills on 2026-09-19 — 5 open claims, each
+Verified against code.claude.com/docs/en/skills on 2026-09-21 — 8 open claims, each
 marked **[UNCONFIRMED]** or **[UNVERIFIED]** inline. Items marked *Convention* are good
 practice, not requirements — report gaps against them as suggestions, never as errors.
 
@@ -22,7 +22,7 @@ practice, not requirements — report gaps against them as suggestions, never as
 
 | Concept | What it means |
 |---------|---------------|
-| Progressive Disclosure | Level 1 = frontmatter (always loaded), Level 2 = SKILL.md body (loaded on trigger), Level 3 = `references/` (on demand) |
+| Progressive Disclosure | Level 1 = the skill's `name` and `description` in the skill listing (in context by default; not for `disable-model-invocation: true` skills), Level 2 = SKILL.md body (loaded on trigger), Level 3 = `references/` (on demand) |
 | Composability | Skills work alongside others; don't assume you're the only one |
 | Portability | The open standard works across Claude.ai, Claude Code, and the API — but see Portability below for which fields survive |
 
@@ -45,7 +45,7 @@ requirement.
 Rules:
 - *Convention:* folder name in kebab-case (no spaces, no capitals, no underscores). The
   docs require kebab-case for **plugin** names; they state no such rule for skill folders
-- File MUST be named exactly `SKILL.md`
+- File MUST be named exactly `SKILL.md` **[UNCONFIRMED — the docs require a `SKILL.md` file but do not state case-sensitivity]**
 - Keep `SKILL.md` under 500 lines (official guidance); move heavy content to `references/`
 - *Convention:* no `README.md` inside the skill folder — put docs in `SKILL.md` or `references/`
 
@@ -65,11 +65,11 @@ description: >-         # the trigger. Combined description + when_to_use capped
 
 | Field | Required | Notes |
 |-------|----------|-------|
-| `name` | No | Display label; defaults to folder name. The command name comes from the directory, not this field (except a plugin-root SKILL.md). |
+| `name` | No | Display label; defaults to folder name. In a personal or project skill the command name comes from the directory, not this field. In a plugin skill, `name` sets the last segment of the command (`/plugin-name:name`); for a plugin-root SKILL.md it supplies the whole final segment. |
 | `description` | Recommended | WHAT + WHEN + triggers. Combined `description` + `when_to_use` capped at 1536 chars in the listing (configurable via `skillListingMaxDescChars`). If omitted, the first non-empty line of the body is used. |
 | `when_to_use` | No | Extra trigger context / example requests; appended to `description`, counts toward the cap. |
 | `disable-model-invocation` | No | `true` = only the user can invoke (manual `/skill-name`); also blocks preload into subagents. |
-| `user-invocable` | No | `false` = hide from the `/` menu (background knowledge only). Controls menu visibility only, not Skill-tool access. |
+| `user-invocable` | No | `false` = only Claude can invoke it: hidden from the `/` menu and not run when you type `/name` (background knowledge only). Claude can still invoke it through the Skill tool; set `disable-model-invocation: true` to prevent that. |
 | `allowed-tools` | No | Tools Claude can use without prompting while the skill is active. Space/comma string or YAML list. |
 | `disallowed-tools` | No | Tools removed from the pool while the skill is active. Clears on next message. |
 | `model` | No | Same values as `/model`, or `inherit`. Applies for the rest of the current turn only. |
@@ -80,33 +80,28 @@ description: >-         # the trigger. Combined description + when_to_use capped
 | `arguments` | No | Named positional args for `$name` substitution. |
 | `shell` | No | Shell for dynamic-injection commands: `bash` (default) or `powershell`. |
 | `background` | No | With `context: fork`, `false` waits for the result in the invoking turn. Default `true`. Requires v2.1.218+. |
-| `hooks` | No | Hooks scoped to this skill's active lifetime. |
+| `hooks` | No | Hooks that Claude Code registers when the skill is invoked and keeps running for the rest of the session (`once: true` removes a hook after its first successful run). |
 | `argument-hint` | No | Shown in autocomplete: `[issue-number]` or `[file] [format]`. |
 | `license` / `compatibility` / `metadata` | No | Open-standard (agentskills.io) fields. |
 
 ### Unknown frontmatter keys
 
-The table above is Claude Code's complete recognised set: "Claude Code accepts every field
-in the table above" (/docs/en/skills). **What Claude Code does with a key outside that set —
-silently ignore it, warn, or reject the file — is not documented.** [UNVERIFIED — do not
-assume "silently ignored" merely because no failure has been observed; that has not been
-confirmed either.]
+The table above is Claude Code's recognised set: "Claude Code accepts every field in the table above" (/docs/en/skills). **A key outside that set is ignored without an error:** "Claude Code ignores a field it doesn't recognize without reporting an error." A misspelt or unsupported field therefore has no effect.
 
 That is a different claim from portability, which the docs do state precisely: uploading to
 claude.ai or the Skills API rejects any field outside the six spec fields with a hard error.
 That error belongs to the **upload and packaging validator**, not to Claude Code loading a
 local `SKILL.md`. Never conflate the two.
 
-**Audit rule.** An unrecognised key in a local `SKILL.md` (say `skills-version: 2`) is not a
-confirmed Claude Code defect — its local behaviour is undocumented — so raise it as a
-SUGGESTION worded as "unrecognised frontmatter key; Claude Code's handling of it is
-undocumented", never as an ERROR. If the skill is or will be published to claude.ai or the
-Skills API, the same key **is** a documented hard failure: raise that at real severity and
-cite the six-field spec.
+**Audit rule.** An unrecognised key in a local `SKILL.md` (say `skills-version: 2`) is not an
+error in Claude Code, which ignores it. Raise it as a SUGGESTION worded "unrecognised
+frontmatter key; Claude Code ignores it, so it has no effect", never as an ERROR. If the
+skill is or will be published to claude.ai or the Skills API, the same key **is** a
+documented hard failure: raise that at real severity and cite the six-field spec.
 
-Avoid angle brackets (`<` `>`) in `description` — they display badly in claude.ai-synced
-skills. For skills uploaded to claude.ai or the Skills API, `name` may not contain the
-reserved words `claude` or `anthropic` **[UNCONFIRMED — not on the Claude Code skills page]**.
+Avoid angle brackets (`<` `>`) in `description`: Claude Code escapes them in the description text that reaches Claude so the text can't imitate its internal formatting (requires v2.1.228+). The docs describe this for skills synced from claude.ai; handling in a local skill's frontmatter is not documented.
+
+For skills uploaded to claude.ai or the Skills API, `name` may not contain the reserved words `claude` or `anthropic` **[UNCONFIRMED — not on the Claude Code skills page]**.
 
 ---
 
@@ -189,13 +184,15 @@ If no placeholder receives the arguments, they are appended as `ARGUMENTS: <inpu
 | `$ARGUMENTS` | All arguments |
 | `$ARGUMENTS[N]` / `$N` | Argument by 0-based index |
 | `$name` | Named argument declared in `arguments:` frontmatter |
-| `${CLAUDE_SKILL_DIR}` | Directory containing this SKILL.md (for plugin skills, the skill's own subdirectory) |
-| `${CLAUDE_PROJECT_DIR}` | Project root |
-| `${CLAUDE_SESSION_ID}` | Current session ID |
-| `${CLAUDE_EFFORT}` | Current effort level |
-| `${CLAUDE_PLUGIN_ROOT}` / `${CLAUDE_PLUGIN_DATA}` | Plugin skills only |
+| `<dollar>{CLAUDE_SKILL_DIR}` | Directory containing this SKILL.md (for plugin skills, the skill's own subdirectory) |
+| `<dollar>{CLAUDE_PROJECT_DIR}` | Project root (substitution requires v2.1.196+) |
+| `<dollar>{CLAUDE_SESSION_ID}` | Current session ID |
+| `<dollar>{CLAUDE_EFFORT}` | Current effort level |
+| `<dollar>{CLAUDE_PLUGIN_ROOT}` / `<dollar>{CLAUDE_PLUGIN_DATA}` | Plugin skills only |
 
-Escape a literal `$` with a backslash: `\$1.00`.
+In this table `<dollar>` stands for a literal `$`, written that way so this skill's own text is not rewritten when it loads.
+
+Escape a literal `$` before a digit with a backslash.
 
 ---
 
@@ -215,7 +212,7 @@ Escape a literal `$` with a backslash: `\$1.00`.
 Budget: the listing costs ~1% of the context window, tunable via
 `skillListingBudgetFraction` or the `SLASH_COMMAND_TOOL_CHAR_BUDGET` env var. When over
 budget, descriptions are dropped starting with the **least-used** skills. `/doctor` shows
-listing cost; `/skill-doctor` finds unused skills.
+listing cost; `/skill-doctor` (v2.1.252+) finds unused skills.
 
 ---
 
@@ -258,11 +255,11 @@ backtick-quoted command; the command's output replaces the placeholder.
 purpose: the syntax is recognised anywhere the bang starts a line or follows whitespace,
 **including inside a fenced code block** **[UNCONFIRMED — observed, not in the docs]**, so a reference file that reproduced it literally
 would execute the command every time it was loaded — including when preloaded into a
-subagent that has no shell. There is no escape character; making the bang follow a
+subagent that has no shell **[UNCONFIRMED — not addressed on the skills page]**. There is no escape character **[UNCONFIRMED — the docs describe a backslash escape only for argument placeholders; none is documented for the bang syntax]**; making the bang follow a
 non-whitespace character renders it inert.
 
 **Audit implication:** any skill containing the live syntax runs that command whenever it
-loads. Treat it like a hook.
+loads, except where `disableSkillShellExecution` is set (bundled and managed skills are not affected) or the skill is synced from claude.ai (Claude Code never runs those commands on your machine). Treat it like a hook.
 
 ```yaml
 ---
@@ -317,7 +314,7 @@ Error / Cause / Solution
 |---------|-------|-----|
 | Never auto-triggers | Description too vague | Add specific trigger phrases; test by asking Claude "when would you use X skill?" |
 | Triggers too often | Description too broad | Add negative triggers; be more specific |
-| Wrong file name | `skill.md` or `SKILL.MD` | Must be exactly `SKILL.md` |
+| Wrong file name | `skill.md` or `SKILL.MD` | Must be exactly `SKILL.md` **[UNCONFIRMED — case-sensitivity is not on the Claude Code skills page]** |
 | Folder name awkward to invoke | Has spaces or capitals | Use kebab-case (a convention; the docs state no skill-folder naming rule) |
 | Description dropped from listing | Over the listing budget, and the skill is rarely used | Shorten descriptions; remove unused skills |
 | Skill conflicts with another | Same name at different scopes | Higher-priority wins: enterprise > user > project |

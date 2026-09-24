@@ -13,7 +13,7 @@ description: >-
   user: "/claudit:audit permissions"
   assistant: "claudit-permissions-reviewer will check every allow/ask/deny rule for rules that can never match, rules shadowed by a deny, and rules far broader than they look, and return each as a change card."
   <commentary>
-  Rules that look right and silently never match are the most common permission fault, and the denial message never says why.
+  Rules that look right and silently never match are the most common permission fault, and a denial message often does not say why.
   </commentary>
   </example>
   <example>
@@ -86,16 +86,19 @@ For each rule, in this order:
 
 1. **Can it ever match?** Trailing wildcard form (` *` vs `*` vs `:*`); the PowerShell `&`
    call operator (observed, not documented: report it with `confidence: UNVERIFIED`); a
-   `param:value` specifier on a tool's content field (ignored with a warning); an
-   unanchored MCP glob; a malformed entry (skipped with a startup warning, so it never
+   `param:value` specifier on a tool's content field (ignored with a warning); a
+   `Tool(param:value)` specifier in an **allow** rule (the docs say that form is for `deny` and
+   `ask`, and that allow rules use each tool's own specifier syntax; what an allow entry such as `Agent(model:opus)` does is undocumented, so report it as `WARNING` with `confidence: UNVERIFIED`); an
+   unanchored MCP glob; a path rule on `Write`/`NotebookEdit`/`Glob`/`MultiEdit` (accepted, never consulted); a malformed entry (skipped with a startup warning, so it never
    applies).
 2. **Is it shadowed?** A `deny` or `ask` rule at any scope beats an `allow`.
 3. **Is it broader than it looks?** Bare `Bash`/`PowerShell`, `Tool(*)`, leading `*`,
    `Bash(git * main)`-style middle wildcards, allow rules on interpreters (`python:*`,
    `node:*`, `npx:*`) that effectively allow any code.
 4. **Does the agent file match?** If an agent file documents `& C:\x.ps1` (observed, not
-   documented) or a
-   `cd … && …` compound, the rule cannot match it however it is written. Fixing one without
+   documented) or a `cd … && …` compound (each subcommand must match on its own; the
+   reference does not cover how `cd` itself is treated, so report that part with `confidence: UNVERIFIED`)
+   that the rule cannot match. Fixing one without
    the other leaves it broken — report both, and put the agent-file change in
    `needs_other_surface` if it is outside your files.
 5. **Sensitive paths.** Missing `deny` protection on obvious secrets (`.env`, private keys,

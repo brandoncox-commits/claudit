@@ -20,7 +20,7 @@ description: >-
   <example>
   Context: A hook meant to block a command never blocks.
   user: "my PreToolUse hook prints a warning but the command still runs"
-  assistant: "claudit-config-reviewer will check the exit code — only exit 2 blocks; exit 1 is a non-blocking error — and propose the exact fix."
+  assistant: "claudit-config-reviewer will check the exit code — exit 2 (or a JSON deny decision) blocks; exit 1 with no JSON decision is a non-blocking error — and propose the exact fix."
   <commentary>
   A hook that silently fails open is a classic documented-behaviour fault.
   </commentary>
@@ -91,8 +91,10 @@ flag it if existing config has that shape.
 2. **Hook type fields**: `command` needs `command`; `prompt` needs `prompt` (a `prompt` hook
    is a single-turn model evaluation that returns a decision — it does not inject text and
    has no `command`); `http` needs `url`.
-3. **Blocking**: only `exit 2` blocks. A hook that is meant to block but exits 1 is an
-   ERROR. A hook meant to give Claude feedback that prints *plain-text* stdout on exit 0 is
+3. **Blocking**: `exit 2` blocks by code alone. Valid JSON on stdout can also decide the
+   outcome whatever the exit code, so a `PreToolUse` hook that exits 0 and prints
+   `permissionDecision: "deny"` does block; never raise it as non-blocking. A hook meant to
+   block that exits 1 with no valid JSON decision is an ERROR. A hook meant to give Claude feedback that prints *plain-text* stdout on exit 0 is
    also an ERROR — plain stdout is swallowed into the debug log for every event except
    `UserPromptSubmit`, `UserPromptExpansion`, `SessionStart` and `PostModelSwitch`. This does
    **not** cover JSON output: a `PreToolUse` or `PostToolUse` hook that exits 0 and prints
@@ -105,9 +107,14 @@ flag it if existing config has that shape.
 5. **Matcher breadth**: `".*"` or a missing matcher on a frequent event runs on every call.
    Say exactly which calls it catches.
 6. **Scope**: session-wide hooks also fire inside every subagent. An agent-frontmatter hook
-   is scoped to that agent and needs folder trust. Plugin agents cannot declare hooks.
+   is scoped to that agent. A project-level agent's frontmatter hooks also need workspace
+   trust for the folder the agent file came from; user-level agents (`~/.claude/agents/`)
+   and agents passed with `--agents` run without that step. Plugin agents cannot declare hooks.
 7. **Failure mode**: what happens to every tool call if the hook's command is missing,
-   slow, or errors.
+   slow, or errors. A missing or non-executable script, a crash, or a timeout is a
+   non-blocking error, so a hook meant as a gate silently lets the call through (fail open);
+   say so. Don't open a script that is not in your prompt: if the command names one, list it under
+   `unverified_claims` rather than assuming it exists.
 8. **Loose agent files with `hooks:`, `mcpServers:` or `permissionMode:` frontmatter**: if
    the file looks third-party, add a `needs_other_surface` note for the supply-chain
    reviewer.
@@ -128,7 +135,15 @@ hook. Never mention one only inside another finding's `effect`.
 - **Enabled or disabled**: read `enabledMcpjsonServers`, `disabledMcpjsonServers` and
   `enableAllProjectMcpServers` literally and name exactly the servers they list. Never
   infer which server is off.
+- **Blanket approval**: `enableAllProjectMcpServers: true` approves every server in a project's `.mcp.json` without a prompt, including servers added later by anyone who can commit to the repo — WARNING. Committed to a project's `.claude/settings.json` it is ignored until the folder is trusted.
+- **What the server runs**: a stdio server's `command` and `args` execute on the user's machine, like a hook. `curl … | sh`, or `bash -c` running downloaded content, is an ERROR (same as hook check 9); `npx -y` or `uvx` of an unpinned package is a WARNING.
 - **Injection surface**: third-party tool descriptions enter every session's context.
+
+## Settings checks
+
+- Keys that run a command on the user's machine (`statusLine`, `apiKeyHelper`, `awsAuthRefresh`, `otelHeadersHelper`): report the command as text, showing any literal secret in it as `<redacted>`, and apply hook checks 7 and 9 (failure mode, remote code). A project settings file can carry them, so say which scope the file is in and that anyone who can commit to that repository controls the command.
+- `disableAllHooks: true` also switches off the status line; say so if a hook or status line the user relies on would stop.
+- None of the keys in this section is covered by your references: report these findings with `confidence: UNVERIFIED` and `source.kind: CLAUDIT_RULE`.
 
 ## Severity and basis
 

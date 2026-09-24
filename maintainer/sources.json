@@ -1,5 +1,5 @@
 {
-  "_comment": "Maps each canonical doc page to the Claudit files that depend on it. sha256 is the hash of the page's normalised markdown as of the last time the dependent files were verified against it; doc_watch.py opens a doc-drift issue when the live page no longer matches. Update a page's sha256 and verified date in the same release PR that re-verifies its dependents. A dependent file may still carry open claims, provided each is marked inline ([UNCONFIRMED] / [UNVERIFIED]); an unmarked unverified claim blocks the update. BASELINE NOTE: all 15 pages were re-verified claim by claim and re-baselined on 2026-09-19. /setup was added as a 16th page on 2026-09-20, baselined at that date, covering only the update commands that skills/troubleshooting cites from it — the rest of that page is not yet claim-checked.",
+  "_comment": "Maps each canonical doc page to the Claudit files that depend on it. sha256 is the hash of the page's normalised markdown as of the last time the dependent files were verified against it; doc_watch.py opens a doc-drift issue when the live page no longer matches. Update a page's sha256 and verified date in the same release PR that re-verifies its dependents. A dependent file may still carry open claims, provided each is marked inline ([UNCONFIRMED] / [UNVERIFIED]); an unmarked unverified claim blocks the update. BASELINE NOTE: all 15 pages were re-verified claim by claim and re-baselined on 2026-09-19. /setup was added as a 16th page on 2026-09-20, baselined at that date, covering only the update commands that skills/troubleshooting cites from it — the rest of that page is not yet claim-checked. Two more pages were added 2026-09-22 as rubric sources not yet backing any shipped file (platform.claude.com's Agent Skills best-practices page and code.claude.com's agent-sdk/subagents page). Both start sha256: null / verified: null (same as /setup did before its first hash was recorded) and covers: [] until they underpin an actual plugins/claudit/ file.",
   "pages": {
     "https://code.claude.com/docs/en/sub-agents.md": {
       "sha256": "bc5cde1e31c0049ae254f0a65314d4d34072f94c15a173fe98cf52bcf0f553d0",
@@ -80,6 +80,16 @@
       "sha256": "b4e5709f5a9554258e50343dc193815ad5888ce06d131fa4fe0e890f692e4a24",
       "verified": "2026-09-20",
       "covers": ["skills/troubleshooting"]
+    },
+    "https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices.md": {
+      "sha256": null,
+      "verified": null,
+      "covers": []
+    },
+    "https://code.claude.com/docs/en/agent-sdk/subagents.md": {
+      "sha256": null,
+      "verified": null,
+      "covers": []
     }
   },
   "changelog": {

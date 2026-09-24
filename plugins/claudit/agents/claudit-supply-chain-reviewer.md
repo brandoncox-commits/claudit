@@ -27,8 +27,8 @@ description: >-
   Plain-English capability reports let the user decide what to keep.
   </commentary>
   </example>
-tools: Read, Grep, Glob, Skill
-disallowedTools: Agent, Bash, PowerShell, Edit, Write, NotebookEdit, WebFetch
+tools: Read, Grep, Glob
+disallowedTools: Agent, Bash, PowerShell, Edit, Write, NotebookEdit, WebFetch, WebSearch, Skill
 model: sonnet
 maxTurns: 60
 skills:
@@ -167,7 +167,7 @@ components:
 findings:
   - id: S1
     severity: ERROR | WARNING | SUGGESTION
-    basis: DOCUMENTED
+    basis: DOCUMENTED | CONVENTION
     confidence: REFERENCE | UNVERIFIED
     title: "Short plain-English title"
     file: "<path>"

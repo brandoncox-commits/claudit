@@ -12,14 +12,16 @@ user-invocable: false
 
 # Permission Rules Reference
 
-Verified on 2026-09-19 against code.claude.com/docs/en/permissions, /permission-modes,
-/sub-agents, /settings and /output-styles — 3 open claims, each marked **[UNCONFIRMED]**
+Verified on 2026-09-20 against code.claude.com/docs/en/permissions, /permission-modes,
+/sub-agents, /settings and /output-styles — 5 open claims, each marked **[UNCONFIRMED]**
 inline: the PowerShell `&` call-operator behaviour (local probe only), "no per-agent allow
-scoping of other tools", and the exact `dontAsk` denial-message wording.
+scoping of other tools", the exact `dontAsk` denial-message wording, what concretely happens
+to an `allow` entry that uses the `Tool(param:value)` form, and whether a UNC path overrides
+an explicit `allow` rule on another command.
 
-The denial message never says *why*. Under `dontAsk` every failure reads along the lines of
+A `dontAsk` denial often does not say *why*: some denials do name the rule (the docs say, in the WebFetch section on artifact reads, "When a rule blocks a read, the denial names the rule"), but the `dontAsk` wording is not documented. The failures observed under `dontAsk` read along the lines of
 "Permission to use X has been denied because Claude Code is running in don't ask mode"
-**[UNCONFIRMED wording]**, whether the rule is missing, malformed, or shadowed by a deny.
+**[UNCONFIRMED wording]**, regardless of whether the rule is missing, malformed, or shadowed by a deny.
 **Never diagnose from the message text — diagnose from the rule.**
 
 ---
@@ -56,9 +58,14 @@ Claude's context entirely.
 bypass it. Use the specifier form instead: `Bash(rm *)`, `Read(./path)`,
 `WebFetch(domain:host)`.
 
-Other scalar parameters *are* matchable: `Bash(run_in_background:true)`,
-`Agent(model:opus)`, `Agent(isolation:worktree)`. One parameter per rule. A parameter the
-model omits never matches, so `Agent(model:*)` misses a call that leaves `model` unset.
+Other scalar parameters *are* matchable — but **only in `deny` and `ask` rules**:
+`Bash(run_in_background:true)`, `Agent(model:opus)`, `Agent(isolation:worktree)`. Allow
+rules "continue to use each tool's own specifier syntax instead," since matching one
+parameter value wouldn't establish that the whole call is safe. **[UNCONFIRMED]** What
+concretely happens to an allow entry written in this form — ignored, warned, or a
+never-matching literal — isn't documented; don't rely on it.
+One parameter per rule. A parameter the model omits never matches, so `Agent(model:*)`
+misses a call that leaves `model` unset.
 
 ---
 
@@ -121,6 +128,7 @@ Every subcommand must match a rule independently, or the whole call is denied.
 - `deny`/`ask` rules match a subcommand **anywhere**, including inside a subshell, a command
   substitution, or a `for` body. `Bash(git clean *)` in `ask` still prompts for
   `echo "$(git clean -f)"`.
+- A `deny`/`ask` Bash rule matches the command text as written, not the program: `Bash(curl *)` does not stop `/usr/bin/curl …` or `sh -c 'curl …'`, and `Bash(git push *)` does not stop `git -C . push`. It is not a security boundary; the sandbox is.
 - When `&&` has nothing after it (`npm test &&`), the command is unparseable and is not
   split, so `Bash(npm *)` will not approve it.
 
@@ -142,8 +150,14 @@ invocation.
 
 ### Windows UNC paths
 
-A Bash **or PowerShell** command whose arguments include a network path (`\\server\share`)
-always prompts, because it can send Windows credentials to the named host.
+In Manual mode, a command from the built-in read-only set still prompts when its arguments
+include a network (UNC) path such as `\\server\share\file`, because accessing one can send
+your Windows credentials to the host it names — the same check applies to PowerShell tool
+commands. **[UNCONFIRMED]** Whether this also overrides an explicit `allow` rule on some
+other command isn't documented; write the rule you need and test it.
+
+Most network paths also can't be added as working directories at all, for the same
+credential-leak reason — map the share to a drive letter and pass that with `--add-dir`.
 
 ### Argument-constraining rules are fragile
 
@@ -154,8 +168,8 @@ arguments.
 ### Output redirects
 
 For `> file`, `>> file`, `2> file`, the target is checked against your `Edit` allow/deny
-rules and working directories. `Bash(git commit *)` allows the command, not the target. A
-target starting with `~` or containing a glob needs approval.
+rules, **protected paths**, and the working directories. `Bash(git commit *)` allows the
+command, not the target. A target starting with `~` or containing a glob needs approval.
 
 ---
 
@@ -173,7 +187,29 @@ rule text therefore matches different locations depending on which file holds it
 
 - A deny/ask rule with an unusable pattern still guards that exact path.
 - An **allow** rule with an unusable pattern approves nothing.
+- A path rule on `Write`, `NotebookEdit`, `Glob` or `MultiEdit` is accepted but never consulted (startup warning, v2.1.210+): write `Edit(path)` or `Read(path)`. A bare `Write` with no path still matches at tool level.
 - Paths approved via "don't ask again" are escaped (`[`, `]`, `*`); rules you write are not.
+
+---
+
+## Cd (the `/cd` command)
+
+`Cd` rules control which directories the `/cd` command can move the session to.
+**`Cd` is not a model-invocable tool** — Claude cannot call it, so these rules apply only
+when a person runs `/cd` themselves.
+
+- A bare `Cd` deny rule disables `/cd` entirely.
+- A `Cd(<path-pattern>)` deny rule blocks matching targets. Deny rules check every spelling
+  of the target, including each symlink hop it resolves through, so a rule written for one
+  path also blocks targets that resolve to it.
+- Adding **any** `Cd` allow rule switches `/cd` into allowlist mode: the resolved target
+  directory must match an allow rule, or `/cd` refuses.
+- With no `Cd` rules configured, `/cd` keeps its default behaviour and prompts to trust an
+  unfamiliar directory.
+
+Path patterns share the `//`, `~/` and `/` anchors from Read and Edit, but matching is
+anchored to the whole directory path rather than gitignore-style: `*` matches exactly one
+segment, `**` crosses segments, and a trailing `/**` also matches its own root.
 
 ---
 
