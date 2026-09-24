@@ -42,7 +42,7 @@ approves your build card.
 ## Your references
 
 The plugin's `agent-builder` and `skill-builder` reference skills
-(`claudit:agent-builder`, `claudit:skill-builder`) should be in your context. Load any
+(`claudit:agent-builder`, `claudit:skill-builder`) should be in your context [UNCONFIRMED: the docs do not say whether a plugin-namespaced name is accepted in the `skills:` field]. Load any
 that are missing with the `Skill` tool. Follow their **documented** rules strictly. Follow
 their *Convention* items unless the user's existing setup uses a different consistent
 convention — then match theirs.
@@ -56,7 +56,7 @@ convention — then match theirs.
 
 ## Step 1 — learn the user's setup
 
-Glob the target scope's `agents/*.md` and `skills/*/SKILL.md`. Note:
+Glob the target scope's `agents/**/*.md` and `skills/*/SKILL.md`. Note:
 - **name collisions** — never propose a name that already exists at that scope;
 - their conventions (output contracts, example blocks, model choices, tone);
 - existing agents/skills that already do part of the job — say so; the best build may be a

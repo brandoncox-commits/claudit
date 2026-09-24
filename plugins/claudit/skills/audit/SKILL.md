@@ -106,7 +106,7 @@ reviewer gets:
 | Surface | Agent (`subagent_type`) | Gets |
 |---|---|---|
 | permissions | `claudit:claudit-permissions-reviewer` | every settings file; every agent file that documents a shell command |
-| config | `claudit:claudit-config-reviewer` | settings files (hooks, env, statusLine, outputStyle), `.mcp.json`, `~/.claude.json`, output styles, plugin `hooks/hooks.json` |
+| config | `claudit:claudit-config-reviewer` | settings files (hooks, env, statusLine, outputStyle), `.mcp.json`, `~/.claude.json`, output styles, plugin `hooks/hooks.json`, and any agent or skill file whose frontmatter contains `hooks:` or `mcpServers:` (Grep the inventoried user and project agent and skill files for lines starting `hooks:` or `mcpServers:`; plugin-cache files are excluded, since plugin agents ignore both fields) |
 | agents | `claudit:claudit-agents-reviewer` | all agent and skill files (not plugin-cache files) |
 | supply-chain | `claudit:claudit-supply-chain-reviewer` | installed plugin directories; loose agent/skill files that look third-party |
 

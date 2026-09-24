@@ -11,11 +11,14 @@ user-invocable: false
 
 Patterns and standards for wiring MCP servers into Claude Code.
 
-Verified against code.claude.com/docs/en/mcp on 2026-09-19 — 0 open claims.
+Verified against code.claude.com/docs/en/mcp on 2026-09-20 — 1 open claim, marked
+**[UNCONFIRMED]** inline.
 
 Two easy mistakes this file guards against: the WebSocket transport `type` is `ws`, not
 `websocket`; and there is no `claude mcp auth` command or `--auth` flag — it is
-`claude mcp login` / `claude mcp logout` (v2.1.186+).
+`claude mcp login` / `claude mcp logout` (v2.1.186+). **[UNCONFIRMED]** The second is a
+negative claim: `mcp.md` documents `claude mcp login`/`logout` but is not the CLI command
+reference, so it does not settle whether `claude mcp auth` exists.
 
 ---
 
@@ -42,7 +45,7 @@ Use project scope for shared tools; user scope for personal API keys or private 
 | Transport | When to use | Notes |
 |-----------|-------------|-------|
 | `stdio` | Local process (Python, Node, binary) | Most common; process managed by Claude |
-| `http` | Remote server with stable URL | Stateless; easiest to host |
+| `http` | Remote server with stable URL | Stateless; easiest to host. In JSON config, `type` also accepts `streamable-http` as an alias for `http` (the MCP spec's own name for this transport) |
 | `sse` | Legacy streaming | Deprecated; use `http` instead |
 | `ws` | Remote server needing a persistent bidirectional connection | The literal `type` value is **`ws`** — writing `websocket` will not work. Accepts the same `url`, `headers`, `headersHelper`, `timeout` and `alwaysLoad` fields as `http` |
 
@@ -183,15 +186,19 @@ subject to `MAX_MCP_OUTPUT_TOKENS`.
 
 ## Plugin-Bundled MCP
 
+In this file `<dollar>` stands for a literal `$`, written that way so this skill's own text is not rewritten when it loads. When you write config for a user, type a real `$`; copying `<dollar>` verbatim produces a server that fails to start.
+
 Bundle MCP config with a plugin in `.mcp.json` at plugin root:
 
 ```json
 {
-  "my-server": {
-    "command": "${CLAUDE_PLUGIN_ROOT}/servers/my-server",
-    "args": ["--config", "${CLAUDE_PLUGIN_ROOT}/config.json"],
-    "env": {
-      "DB_URL": "${DB_URL}"
+  "mcpServers": {
+    "my-server": {
+      "command": "<dollar>{CLAUDE_PLUGIN_ROOT}/servers/my-server",
+      "args": ["--config", "<dollar>{CLAUDE_PLUGIN_ROOT}/config.json"],
+      "env": {
+        "DB_URL": "${DB_URL}"
+      }
     }
   }
 }
@@ -204,13 +211,13 @@ Or inline in `plugin.json`:
   "name": "my-plugin",
   "mcpServers": {
     "my-server": {
-      "command": "${CLAUDE_PLUGIN_ROOT}/servers/my-server"
+      "command": "<dollar>{CLAUDE_PLUGIN_ROOT}/servers/my-server"
     }
   }
 }
 ```
 
-Use `${CLAUDE_PLUGIN_ROOT}` for paths relative to plugin install dir.
+Use `<dollar>{CLAUDE_PLUGIN_ROOT}` for paths relative to plugin install dir.
 
 ---
 

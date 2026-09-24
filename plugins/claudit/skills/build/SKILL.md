@@ -104,6 +104,10 @@ Show:
    user wants to read them.
 3. Any permission rules, each with its plain-English effect statement.
 4. Any outstanding review findings.
+5. In bold, any `hooks`, `mcpServers` or `permissionMode` field in a drafted file, and what
+   it would run, connect to or change. For `hooks` and `mcpServers`, add that the config
+   reviewer has not checked it, and offer `/claudit:audit config` once written (it audits
+   the whole setup, not just this file).
 
 Ask with `AskUserQuestion`:
 - **Build it (Recommended)** — write the files and add the permission rules shown
@@ -135,6 +139,6 @@ Tell the user, briefly:
 - what was created and where;
 - how to try it (the card's "Try it" line);
 - that agent and skill files are picked up automatically within seconds — except the very
-  first agent in an `agents/` folder that did not exist when the session started, which
-  needs a restart;
+  first agent in an `agents/` folder, or the very first skill in a `skills/` folder, that
+  did not exist when the session started, which needs a restart;
 - how to remove it (delete the file(s), and the named rules).

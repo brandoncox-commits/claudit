@@ -12,9 +12,10 @@ user-invocable: false
 
 Patterns and standards for creating Claude Code subagents.
 
-Verified on 2026-09-19 against code.claude.com/docs/en/sub-agents, /permission-modes,
-/plugins-reference and /hooks — 4 open claims, each marked **[UNCONFIRMED]** inline. A few
-claims rest on runtime probes rather than the docs; each says so where it appears.
+Verified on 2026-09-20 against code.claude.com/docs/en/sub-agents, /permission-modes,
+/plugins-reference and /hooks — 3 open claims remain, each marked **[UNCONFIRMED]** inline.
+A few other claims rest on runtime probes rather than the docs; each says so where it
+appears.
 
 **Two kinds of guidance live here — keep them apart when auditing:**
 - **Documented behaviour** — what Claude Code actually does. Getting this wrong breaks
@@ -108,13 +109,14 @@ Only `name` and `description` are required.
 | `name` | Required. kebab-case, no colons. Becomes `agent_type` in hooks. |
 | `description` | Required. How Claude decides to delegate. Combined descriptions over 15,000 tokens trigger a warning. |
 | `tools` | Allowlist. Inherits all subagent-available tools if omitted. Supports `Agent(type1, type2)` to restrict spawnable subagents (main-session agents only — see Nesting). |
-| `disallowedTools` | Denylist: "removed from inherited or specified list" (ordering relative to `tools` **[UNCONFIRMED]**). Supports `mcp__<server>` patterns. |
+| `disallowedTools` | Denylist: "removed from inherited or specified list". Applied **before** `tools`: `disallowedTools` resolves first, then `tools` against the remaining pool; a tool named in both is removed. Supports `mcp__<server>` patterns. |
 | `model` | `inherit` / `haiku` / `sonnet` / `opus` / `fable` / full ID (e.g. `claude-opus-5`). Omit to follow precedence. |
 | `permissionMode` | `default` / `manual` / `acceptEdits` / `auto` / `dontAsk` / `bypassPermissions` / `plan`. Subject to inheritance rules above. Not available to plugin agents. |
+| `omitClaudeMd` | `true` launches the subagent without the user, project and local CLAUDE.md files; managed policy files still load, except for managed subagents. For agents that take everything they need from the delegation prompt. Ignored when the agent runs as the main session agent. Requires v2.1.271+. |
 | `maxTurns` | Max agentic turns. Output marked partial; resumable via `SendMessage`. |
 | `skills` | Skill names preloaded in full at startup. Agents do NOT inherit the parent's skills. Cannot preload `disable-model-invocation: true` skills. |
 | `mcpServers` | MCP servers scoped to this agent. Names or inline definitions. Not available to plugin agents. |
-| `hooks` | Lifecycle hooks scoped to this agent. **All hook events are supported** (a `Stop` hook here is auto-converted to `SubagentStop`). Requires folder trust (v2.1.218+). Not available to plugin agents. |
+| `hooks` | Lifecycle hooks scoped to this agent. **All hook events are supported** (a `Stop` hook here is auto-converted to `SubagentStop`). Only project-level subagents' hooks need workspace trust for the folder containing the agent file (v2.1.218+); user-level (`~/.claude/agents/`) and `--agents` definitions run without that step. Not available to plugin agents. |
 | `memory` | `user` / `project` / `local`. Enables cross-session learning. |
 | `background` | `true` keeps the agent in background even when foreground is requested. |
 | `effort` | `low` / `medium` / `high` / `xhigh` / `max`. |
@@ -137,17 +139,12 @@ hostile one can register a shell-executing `PreToolUse` hook, add an MCP server,
 Removed even if listed in `tools`:
 
 `AskUserQuestion`, `EndConversation`, `EnterPlanMode`, `ExitPlanMode` (unless
-`permissionMode: plan`), `ScheduleWakeup`, `TaskOutput`, `WaitForMcpServers`, `Workflow`,
+`permissionMode: plan`), `ScheduleWakeup`, `WaitForMcpServers`, `Workflow`,
 and `Agent` once at the depth limit.
-
-Because `TaskOutput` is stripped, a subagent acting as an orchestrator cannot collect
-background results that way **[UNCONFIRMED — an inference; the docs list the stripping,
-not this consequence]**. Spawn children in the foreground, or orchestrate from the
-main session.
 
 ### Background vs foreground tool pools
 
-**Background** subagents keep only: `Read`, `Grep`, `Glob`, `Bash`, `PowerShell`, `Edit`,
+**Background** subagents keep only: `Read`, `Grep`, `Glob`, `LSP`, `Bash`, `PowerShell`, `Edit`,
 `Write`, `NotebookEdit`, `WebFetch`, `WebSearch`, `TodoWrite`, `Skill`, `ToolSearch`,
 `EnterWorktree`, `ExitWorktree`, `Monitor`, `TaskStop`, `SendMessage`, `Artifact`, and
 `SubagentHandback` (for a subagent that reports through it), plus all MCP tools. **Foreground** subagents get whatever the `tools` field specifies (or every
@@ -321,16 +318,26 @@ Agent({ description: "Search for X", subagent_type: "Explore", model: "haiku",
         prompt: "..." })
 ```
 
-**`description` and `prompt` are both required.**
+**`subagent_type` should always be supplied.** Omitting it falls back to the `general-purpose` subagent; the call fails only when the session has no `general-purpose` subagent: "An Agent tool call that omits
+`subagent_type` fails with `subagent_type is required`... when the session has no
+`general-purpose` subagent to fall back on." **[UNCONFIRMED]** Whether `description` and `prompt` are
+independently required is not established here — that lives in the tools reference, outside
+this file's sources. Every documented example supplies all three; do the same.
 
-**There is no `run_in_background` parameter on the Agent tool.** Backgrounding:
+**The Agent tool's `run_in_background` parameter exists only when fork mode is off.**
+Fork mode — the default in an interactive session — removes the parameter from the tool
+entirely, so Claude cannot ask for the foreground. It is available in `-p`/headless runs
+and in the Agent SDK unless fork mode is turned on. Backgrounding:
 
 - Set `background: true` in the **agent's own frontmatter** to keep it in the background.
 - Otherwise Claude Code decides. With fork mode on — the default in an interactive
   session — subagents run in the background. With fork mode off (`-p`/headless, and the
   Agent SDK unless enabled), it runs them in the foreground when it needs the result.
 - `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` forces foreground everywhere.
-- `run_in_background: true` exists only for agent-team **teammates**.
+- Agent-team teammates: two more refusals, both scoped to an in-process teammate spawning
+  a subagent. Claude Code refuses with an error if the subagent's *definition* sets
+  `background: true`. With fork mode off and background tasks not disabled, it also refuses
+  with an error when the teammate's spawn call sets `run_in_background: true`.
 
 **Resume via `SendMessage`**, not an `Agent({resume:...})` parameter:
 
@@ -351,7 +358,7 @@ Built-in Explore/Plan are one-shot and cannot resume.
 
 ## Hooks
 
-Frontmatter hooks are agent-scoped and need folder trust (v2.1.218+). **All hook events
+Frontmatter hooks are agent-scoped. Only project-level subagent hooks require workspace trust for the folder containing the agent file (v2.1.218+); hooks from user-level subagents in `~/.claude/agents/` and from definitions passed via `--agents` run without that step. **All hook events
 are supported**; the most common for subagents are `PreToolUse`, `PostToolUse`, and `Stop`
 (auto-converted to `SubagentStop`). Not available to plugin agents.
 
@@ -363,7 +370,7 @@ Session-level hooks in settings.json also see subagents, and add **`SubagentStar
 ## Built-in Subagents
 
 `Explore` (read-only, skips CLAUDE.md/git status), `Plan` (read-only research),
-`general-purpose` (full tools). Cannot be removed. Disable with
+`general-purpose` (full tools). Registered by default in interactive sessions. Restrict with
 `CLAUDE_CODE_DISABLE_EXPLORE_PLAN_AGENTS=1`, `CLAUDE_AGENT_SDK_DISABLE_BUILTIN_AGENTS=1`
 (non-interactive mode and the Agent SDK only; removes all built-in types), or
 `permissions.deny: ["Agent(Explore)", "Agent(Plan)"]`.
@@ -400,7 +407,6 @@ sessions started with `--disable-slash-commands`.
 - DO: check the parent's mode before relying on a child's `permissionMode`
 - DO: have agents surface permission denials rather than work around them
 - DO NOT: expect a subagent to ask the user anything
-- DO NOT: use `TaskOutput` from inside a subagent — it is stripped
 - DO NOT: give worker agents the `Agent` tool by default
 - DO NOT: put an orchestrator in `dontAsk` — it cannot escalate
 - DO NOT: create an agent just to do a single Glob/Grep call

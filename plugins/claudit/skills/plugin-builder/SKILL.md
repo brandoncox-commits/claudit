@@ -12,10 +12,9 @@ user-invocable: false
 
 Patterns and standards for creating and distributing Claude Code plugins.
 
-Verified on 2026-09-19 against code.claude.com/docs/en/plugins, /plugins-reference,
-/plugin-marketplaces, /discover-plugins and /sub-agents — 2 open claims, each marked
-**[UNCONFIRMED]** inline. The `/plugin` command list was re-checked against /discover-plugins
-on 2026-09-20.
+Verified on 2026-09-20 against code.claude.com/docs/en/plugins, /plugins-reference,
+/plugin-marketplaces, /discover-plugins and /sub-agents — 2 open claims, marked
+**[UNCONFIRMED]** inline.
 
 ---
 
@@ -96,15 +95,17 @@ The `name` field becomes the namespace prefix: `/my-plugin:skill-name`.
 Same as regular skills but namespaced. `skills/greet/SKILL.md` → `/my-plugin:greet`.
 Arguments work the same: `/my-plugin:greet Alex` → `$ARGUMENTS = "Alex"`.
 
-Inside plugin skill content, `${CLAUDE_PLUGIN_ROOT}` (install directory) and
-`${CLAUDE_PLUGIN_DATA}` (persistent data directory that survives updates) are substituted,
-as is `${CLAUDE_SKILL_DIR}` (the skill's own subdirectory).
+Inside plugin skill content, `<dollar>{CLAUDE_PLUGIN_ROOT}` (install directory) and
+`<dollar>{CLAUDE_PLUGIN_DATA}` (persistent data directory that survives updates) are substituted,
+as is `<dollar>{CLAUDE_SKILL_DIR}` (the skill's own subdirectory). In this file `<dollar>` stands for a literal `$`, written that way so this skill's own text is not rewritten when it loads. When you write config for a user, type a real `$`; copying `<dollar>` verbatim produces a server that fails to start.
+
 ---
 
 ## Agents in Plugins
 Plugin agents support only: `name`, `description`, `model`, `effort`, `maxTurns`,
-`tools`, `disallowedTools`, `skills`, `memory`, `background`, `omitClaudeMd`, and
-`isolation` (the only valid value is `"worktree"`).
+`tools`, `disallowedTools`, `skills`, `memory`, `background`, `omitClaudeMd`, `color`,
+`experimental`, and `isolation` (the only valid value is `"worktree"`). `initialPrompt` is
+also not supported.
 
 **For security reasons, `hooks`, `mcpServers`, and `permissionMode` are not supported
 for plugin-shipped agents.** A plugin agent that declares them does not get them. Enforce
@@ -152,11 +153,13 @@ highest-trust component a plugin can ship.
 In `.mcp.json` at plugin root:
 ```json
 {
-  "database-tools": {
-    "command": "${CLAUDE_PLUGIN_ROOT}/servers/db-server",
-    "args": ["--config", "${CLAUDE_PLUGIN_ROOT}/config.json"],
-    "env": {
-      "DB_URL": "${DB_URL}"
+  "mcpServers": {
+    "database-tools": {
+      "command": "<dollar>{CLAUDE_PLUGIN_ROOT}/servers/db-server",
+      "args": ["--config", "<dollar>{CLAUDE_PLUGIN_ROOT}/config.json"],
+      "env": {
+        "DB_URL": "${DB_URL}"
+      }
     }
   }
 }
@@ -195,9 +198,14 @@ plugins (typescript-lsp, pyright-lsp, gopls-lsp, rust-analyzer-lsp, etc.).
 ## Testing a Plugin Locally
 ```bash
 claude plugin validate ./my-plugin          # same check the community review runs
-claude --plugin-dir ./my-plugin             # load without installing
-claude --plugin-dir ./plugin-one --plugin-dir ./plugin-two
+claude --plugin-dir ./my-plugin             # load without installing, for one session
+claude --plugin-dir ./plugin-one --plugin-dir ./plugin-two  # load several at once
+claude --plugin-dir ./plugins               # folder of plugins: loads every subfolder
+                                             # with a manifest. Requires v2.1.265+
+claude --plugin-url https://…/my-plugin.zip # zip archive hosted at a URL; repeat the
+                                             # flag to load more than one
 claude plugin init my-tool                  # scaffold a skills-directory plugin
+claude plugin eval ./my-plugin              # run the plugin's eval suite. Requires v2.1.269+
 ```
 
 A `--plugin-dir` plugin takes precedence over an installed plugin of the same name for that
@@ -222,10 +230,23 @@ Plugin `source` can be a relative path, `github` (`repo`, optional `ref`/`sha`),
 `git-subdir`, `npm`, a zip `archive`, or a `command`. Relative paths only resolve when the
 marketplace is added from git or a local directory, not from a direct JSON URL.
 
+A `command` source shows the user the exact command before it runs. In a non-interactive
+shell, `claude plugin install` and `claude plugin update` take `--yes` to accept whatever
+command is currently printed, or `--accept-command <sha256>` to accept only the exact
+command a prior `--json` run reported in its `shownCommand` object — if the command, plugin,
+or marketplace catalog changed since that run, the digest doesn't match and Claude Code
+shows the command again. `--accept-command` requires v2.1.271+; prefer it in automation,
+since `--yes` accepts whatever is printed at the moment it runs, not necessarily what you
+reviewed earlier.
+
 ```bash
-/plugin                                     # open the plugin manager UI (menu — ignores arguments)
+/plugin                                     # open the interactive plugin manager panel
+/plugin list                                # list installed plugins without opening the panel
+/plugin list --enabled                      # also --disabled
+/plugin validate ./my-plugin                # run the validation checks inline
 /plugin marketplace add owner/repo
 /plugin install my-plugin@my-marketplace
+/plugin install my-plugin --marketplace owner/repo  # adds the marketplace first; v2.1.275+
 /plugin uninstall my-plugin@my-marketplace
 /plugin disable my-plugin@my-marketplace
 /plugin enable my-plugin@my-marketplace
@@ -234,12 +255,22 @@ marketplace is added from git or a local directory, not from a direct JSON URL.
 /plugin marketplace remove my-marketplace   # also uninstalls its plugins
 ```
 
-`/plugin` on its own opens an interactive, tabbed panel in the terminal CLI. Cycle the tabs
-with **Tab**, or **Shift+Tab** to go backward. Settings that live only in that panel — such as
-enabling auto-update for a marketplace — have to be changed by navigating it.
-**[UNCONFIRMED]** The docs describe `/plugin` only as interactive, and do not say what a bare
-`/plugin` does with trailing arguments; observed behaviour is that they are ignored, so a
-setting cannot be changed by typing it as an argument.
+Shortcuts: `/plugin market` works in place of `/plugin marketplace`, and `rm` in place of
+`remove`.
+
+`/plugin` with no recognised subcommand opens an interactive, tabbed panel in the terminal
+CLI. Cycle the tabs with **Tab**, or **Shift+Tab** to go backward. `/plugin list` runs
+without opening it. `/plugin install` opens only that plugin's details view, to pick an
+install scope — not the full manager. `/plugin disable`, `/plugin enable` and
+`/plugin uninstall` do open the panel and leave it open — **Esc** closes it before you type
+another command. **[UNCONFIRMED]** Whether `/plugin validate` and the `/plugin marketplace`
+add/update/remove/list commands also skip the panel isn't stated as plainly: `/plugin validate`
+is described only as running its checks "inline," and the marketplace commands are presented
+as an alternative to the interactive Marketplaces tab, but no sentence says outright that any
+of them never opens the panel. Settings that exist only in the panel — enabling auto-update
+for a marketplace, for instance — have no documented CLI equivalent; the panel is the
+per-user way to change them (administrators can instead set `"autoUpdate": true` on an
+`extraKnownMarketplaces` entry in managed settings).
 
 Install scopes: **User** (all your projects), **Project** (all collaborators — writes
 `.claude/settings.json`), **Local** (you, this repo only).
@@ -251,9 +282,11 @@ Install scopes: **User** (all your projects), **Project** (all collaborators —
   except for a plugin with a `command` source or one loaded in place. If both `plugin.json` and the marketplace entry set it, `plugin.json` wins.
 - If no version is set, git-sourced plugins are versioned by commit SHA.
 - **Auto-update:** `claude-plugins-official` and most other official Anthropic marketplaces
-  have it enabled by default. **Third-party and local marketplaces have it disabled by
-  default** — users enable it in `/plugin` → Marketplaces, or run
-  `/plugin marketplace update`.
+  have it enabled by default; third-party and local marketplaces have it disabled by
+  default. Toggle it per marketplace via `/plugin` → Marketplaces → *Enable/Disable
+  auto-update*. **[UNCONFIRMED]** Whether `/plugin marketplace update` — a one-off
+  catalogue refresh — leaves this setting untouched: the docs describe the two as separate
+  mechanisms but never state that refreshing doesn't change the toggle.
 - Updates are checked in the background after session start; the running session keeps the
   version it loaded and is told to `/reload-plugins`.
 - Rename or retire a plugin with the marketplace `renames` map (`"old": "new"` or
@@ -271,8 +304,6 @@ Install scopes: **User** (all your projects), **Project** (all collaborators —
    pinned to a commit SHA and CI bumps the pin as you push.
 3. **The official marketplace** (`claude-plugins-official`) is curated by Anthropic at its
    discretion. There is no application process; the submission forms do NOT add to it.
-
-Inclusion in a directory does not grant rights to Anthropic's names or marks **[UNCONFIRMED]**.
 
 Position by outcomes, not features:
 ```
@@ -314,7 +345,7 @@ removing: plugin skills are namespaced, so both remain available.
 ## DO / DO NOT
 
 - DO: put all directories at plugin root (not inside `.claude-plugin/`)
-- DO: use `${CLAUDE_PLUGIN_ROOT}` for plugin-relative paths
+- DO: use `<dollar>{CLAUDE_PLUGIN_ROOT}` for plugin-relative paths
 - DO: run `claude plugin validate` and test with `--plugin-dir` before publishing
 - DO: bump `version` on every release you want users to receive
 - DO NOT: include components inside `.claude-plugin/`

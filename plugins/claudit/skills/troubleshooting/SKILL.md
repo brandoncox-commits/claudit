@@ -88,9 +88,9 @@ commands under Diagnostic Commands were verified against /setup on 2026-09-20.
 | `/plugin` command not found | Outdated Claude Code version | Update: `npm install -g @anthropic-ai/claude-code@latest`, or re-run the native installer |
 | Plugin not loading | Wrong directory structure | All dirs at root; only `plugin.json` in `.claude-plugin/`. Check the `/plugin` Errors tab |
 | Skills not showing after install | Not yet activated | Run `/reload-plugins` or restart |
-| Update not arriving | `version` not bumped, or auto-update off | Third-party marketplaces have auto-update off by default — run `/plugin marketplace update` |
+| Update not arriving | `version` not bumped, or auto-update off | Third-party marketplaces have auto-update off by default. `/plugin marketplace update` refreshes once; to turn auto-update on, use `/plugin` → Marketplaces → Enable auto-update |
 | LSP "executable not found" | Binary not installed | Install language server binary |
-| MCP not loading from plugin | Wrong path variable | Use `${CLAUDE_PLUGIN_ROOT}` for plugin-relative paths |
+| MCP not loading from plugin | Wrong path variable | Use `<dollar>{CLAUDE_PLUGIN_ROOT}` for plugin-relative paths (`<dollar>` stands for a literal `$`; written that way so this skill's text is not rewritten when it loads) |
 
 ---
 

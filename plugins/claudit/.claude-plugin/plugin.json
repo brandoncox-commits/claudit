@@ -1,7 +1,7 @@
 {
   "name": "claudit",
   "displayName": "Claudit",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Audit, fix and build your Claude Code setup against Anthropic's documented guidance. Every change is explained in plain English and applied only with your approval.",
   "author": {
     "name": "brandoncox-commits",
