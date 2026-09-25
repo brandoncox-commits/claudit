@@ -204,7 +204,8 @@ Escape a literal `$` before a digit with a backslash.
   edits a file in that subdirectory. `/add-dir <path>` preloads them (v2.1.257+)
 - A nested skill sharing a root skill's name stays available under a directory-qualified
   name (`/apps/web:deploy`); the root keeps the bare `/deploy`
-- Folder name `synced` is **reserved** (skills pulled from a claude.ai account)
+- Folder name `synced` is **reserved**, in any capitalization. Claude Code uses `~/.claude/skills/synced/` for skills downloaded from claude.ai and skips a skill you author at that name in the enterprise, personal, and project locations
+- Synced skills: in terminal sessions where you sign in with your claude.ai account, Claude Code downloads your account's skills into that folder in the background when the session starts. Syncing in terminal sessions requires v2.1.273 or later, and `syncClaudeAiSkills` set to `false` in user settings stops it on a machine. A synced skill runs as `/anthropic-skills:<name>` or as `/<name>`; when another command has that short name, `/<name>` runs the other command and the synced skill runs only under its full name. For an audit: an unexpected skill in `~/.claude/skills/synced/` is most likely a synced claude.ai account skill (possibly one the user created on claude.ai), not one authored on this machine. The docs don't say the folder can hold nothing else, and Claude Code never uploads edits made there. (`<name>` here is a plain word in angle brackets, not a substitution.)
 - Symlinks are followed; the same target reachable twice loads once
 - Plugin skills are namespaced (`/plugin-name:skill-name`) and never collide with
   standalone skills
@@ -259,7 +260,7 @@ subagent that has no shell **[UNCONFIRMED — not addressed on the skills page]*
 non-whitespace character renders it inert.
 
 **Audit implication:** any skill containing the live syntax runs that command whenever it
-loads, except where `disableSkillShellExecution` is set (bundled and managed skills are not affected) or the skill is synced from claude.ai (Claude Code never runs those commands on your machine). Treat it like a hook.
+loads, provided the command passes your permission rules. Injected commands never prompt for permission: a command a deny rule matches aborts the invocation, and outside auto mode so does any command whose permission check returns anything other than `allow`, including a rule that would normally ask. An unmatched command aborts unless the skill's `allowed-tools` pre-approves it, and deny and ask rules still override `allowed-tools`. In auto mode a command that would otherwise need your approval does not abort: the skill loads with an instruction for Claude to run it first, and Claude's own call goes through auto mode's usual checks. The invocation still aborts in a forked skill that sets `agent`, and in a session where Claude does not have the shell tool that runs injected commands. Exceptions: `disableSkillShellExecution` is set (bundled and managed skills are not affected), or the skill is synced from claude.ai (Claude Code never runs those commands on your machine). Treat it like a hook.
 
 ```yaml
 ---

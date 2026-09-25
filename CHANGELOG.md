@@ -4,6 +4,32 @@ All notable changes to Claudit. Versions follow [semantic versioning](https://se
 Guidance changes (a reference skill corrected against the live docs) are listed under
 **Guidance**, with the doc page that changed.
 
+## [0.2.1] — 2026-09-25
+
+Guidance-only release: three reference skills were updated against the current Claude Code
+docs. No agent, command or hook behaviour changed. The verification stamps at the top of each
+reference skill keep their existing dates, and no doc-watch drift page was re-verified or
+re-baselined.
+
+### Guidance
+- skill-builder — corrected the audit note on skills that run shell commands when loaded. Such
+  commands never prompt: a matching deny rule, or any command whose permission check is not
+  allow outside auto mode, aborts the skill unless its `allowed-tools` pre-approves it. In auto
+  mode the skill loads with an instruction for Claude to run it, and it still aborts in a
+  forked skill that sets an agent or in a session with no shell tool. Also documented
+  claude.ai skill sync in terminal sessions (v2.1.273+), its opt-out setting
+  `syncClaudeAiSkills`, the `/anthropic-skills:<name>` full name, and a fuller note on the
+  reserved `synced` folder name.
+- permission-rules — documented `!` negation patterns in Read/Edit deny and ask rules
+  (same-source only, and ignored if listed first), the write-check that now applies to `tee`
+  targets (v2.1.269+), and how allow and deny rules treat symlinks. The line saying deny rules
+  cannot carry exceptions is now qualified.
+- plugin-builder — documented synced plugin IDs (`<name>@synced`), the reserved marketplace
+  names, and the `syncClaudeAiPlugins` opt-out.
+
+### Repository
+- `maintainer/sources.json` — the Claude Code changelog has been reviewed through 2.1.282.
+
 ## [0.2.0] — 2026-09-24
 
 Every agent and skill was re-checked against the current Claude Code docs, which have

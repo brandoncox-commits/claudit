@@ -275,6 +275,8 @@ per-user way to change them (administrators can instead set `"autoUpdate": true`
 Install scopes: **User** (all your projects), **Project** (all collaborators — writes
 `.claude/settings.json`), **Local** (you, this repo only).
 
+Synced plugins have IDs of the form `<name>@synced`, and no marketplace can be named `inline`, `skills-dir`, or `synced`. To turn off every synced plugin on a machine, set `syncClaudeAiPlugins` to `false` in your user settings; an organization can set it in managed settings. (`<name>` is a plain word in angle brackets, not a substitution.)
+
 ---
 
 ## Versioning and Updates
