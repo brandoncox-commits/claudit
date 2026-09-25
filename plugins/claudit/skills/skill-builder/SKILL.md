@@ -12,7 +12,7 @@ user-invocable: false
 
 Patterns and standards for creating Claude Code skills (Agent Skills open standard).
 
-Verified against code.claude.com/docs/en/skills on 2026-09-21 — 8 open claims, each
+Verified against code.claude.com/docs/en/skills on 2026-09-25 — 8 open claims, each
 marked **[UNCONFIRMED]** or **[UNVERIFIED]** inline. Items marked *Convention* are good
 practice, not requirements — report gaps against them as suggestions, never as errors.
 

@@ -10,7 +10,7 @@ user-invocable: false
 
 # Output Style Builder Reference
 
-Verified against code.claude.com/docs/en/output-styles on 2026-09-19 — 0 open claims.
+Verified against code.claude.com/docs/en/output-styles on 2026-09-25 — 0 open claims.
 
 Common stale beliefs this file corrects: output styles are NOT skills and do not live in
 `~/.claude/skills/`; there are only four frontmatter fields; and switching styles no longer
@@ -99,8 +99,9 @@ To set it without the menu:
 }
 ```
 
-**Only one style is active at a time** — it is a single `outputStyle` field, so there is no
-multi-style conflict to resolve.
+**Only one style is active at a time** — it is a single `outputStyle` field. A plugin style
+with `force-for-plugin: true` overrides it, and if several enabled plugins set that, the first
+one loaded wins.
 
 **Styles don't auto-activate.** The docs describe no description-matching or
 trigger-phrase mechanism; `description` is shown to a human in the picker. The one
@@ -170,7 +171,7 @@ responses by design (more output tokens); Concise does the opposite.
 
 | Symptom | Likely cause | Fix |
 |---------|-------------|-----|
-| Style doesn't appear in the `/config` picker | Missing `description`, or file not under an `output-styles/` directory | Add a `description`; confirm the file is at `~/.claude/output-styles/` or `.claude/output-styles/` |
+| Style doesn't appear in the `/config` picker | File not under an `output-styles/` directory | Confirm the file is at `~/.claude/output-styles/` or `.claude/output-styles/` |
 | Style selected but nothing changed | Before v2.1.251 a switch applied only after `/clear`; or you edited the style file, which is read at startup | Update Claude Code, or restart after editing a style file |
 | Coding behaviour got worse | `keep-coding-instructions` not set | Add `keep-coding-instructions: true` |
 | Style has no effect on a subagent | Working as designed | Styles apply to the main conversation only; put it in the agent file instead |

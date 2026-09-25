@@ -12,7 +12,7 @@ user-invocable: false
 
 Patterns for creating Claude Code hooks that react to tool calls and session events.
 
-Verified against code.claude.com/docs/en/hooks and /docs/en/hooks-guide on 2026-09-19 —
+Verified against code.claude.com/docs/en/hooks and /docs/en/hooks-guide on 2026-09-25 —
 0 open claims. A few details rest on a runtime probe of `PostToolUse` stdin; each says so
 where it appears.
 

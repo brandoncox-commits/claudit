@@ -12,7 +12,7 @@ user-invocable: false
 
 # Permission Rules Reference
 
-Verified on 2026-09-20 against code.claude.com/docs/en/permissions, /permission-modes,
+Verified on 2026-09-25 against code.claude.com/docs/en/permissions, /permission-modes,
 /sub-agents, /settings and /output-styles — 5 open claims, each marked **[UNCONFIRMED]**
 inline: the PowerShell `&` call-operator behaviour (local probe only), "no per-agent allow
 scoping of other tools", the exact `dontAsk` denial-message wording, what concretely happens
@@ -156,8 +156,8 @@ your Windows credentials to the host it names — the same check applies to Powe
 commands. **[UNCONFIRMED]** Whether this also overrides an explicit `allow` rule on some
 other command isn't documented; write the rule you need and test it.
 
-Most network paths also can't be added as working directories at all, for the same
-credential-leak reason — map the share to a drive letter and pass that with `--add-dir`.
+Most network paths also can't be added as working directories at all, because looking
+one up can contact the host it names — map the share to a drive letter and pass that with `--add-dir`.
 
 ### Argument-constraining rules are fragile
 

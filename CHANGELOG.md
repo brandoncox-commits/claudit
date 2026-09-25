@@ -6,10 +6,11 @@ Guidance changes (a reference skill corrected against the live docs) are listed 
 
 ## [0.2.1] — 2026-09-25
 
-Guidance-only release: three reference skills were updated against the current Claude Code
-docs. No agent, command or hook behaviour changed. The verification stamps at the top of each
-reference skill keep their existing dates, and no doc-watch drift page was re-verified or
-re-baselined.
+Guidance-only release. No agent, command or hook behaviour changed. All 16 documentation pages
+that Claudit's doc-watch tracks were re-verified claim by claim against the live docs on
+2026-09-25. Their recorded hashes and verification dates in `maintainer/sources.json` were
+re-baselined, the verification stamps at the top of nine reference skills were re-dated and
+their open-claim counts corrected, and the Claude Code changelog is reviewed through 2.1.282.
 
 ### Guidance
 - skill-builder — corrected the audit note on skills that run shell commands when loaded. Such
@@ -23,12 +24,28 @@ re-baselined.
 - permission-rules — documented `!` negation patterns in Read/Edit deny and ask rules
   (same-source only, and ignored if listed first), the write-check that now applies to `tee`
   targets (v2.1.269+), and how allow and deny rules treat symlinks. The line saying deny rules
-  cannot carry exceptions is now qualified.
-- plugin-builder — documented synced plugin IDs (`<name>@synced`), the reserved marketplace
-  names, and the `syncClaudeAiPlugins` opt-out.
+  cannot carry exceptions is now qualified, and the reason network paths cannot be added as
+  working directories is corrected.
+- plugin-builder — documented synced plugin IDs (`<name>@synced`) and the `syncClaudeAiPlugins`
+  opt-out. Corrected the migration note: plugin skills and agents carry a plugin prefix so the
+  originals do not collide, but hooks left in both places run twice. Updated the `/plugin`
+  panel description to the now-documented per-command behaviour, trimmed the community and
+  official marketplace notes to what the docs state, and corrected the "/plugin not found"
+  troubleshooting row.
+- mcp-config — project `.mcp.json` servers need approval only in interactive sessions.
+  Corrected the http transport description.
+- agent-builder — corrected the dontAsk and `--agent` main-session Tools rows, and marked one
+  unverified AskUserQuestion claim.
+- output-style-builder — corrected the plugin force-for-plugin conflict note and a
+  troubleshooting row.
+- troubleshooting — corrected the folder-naming note and three rows, and removed three markers
+  the docs now settle.
+- audit — removed an undocumented user-scope settings file from the inventory.
+- Reviewer agents — marked or softened unverified claims in the agents, permissions and
+  supply-chain reviewers.
 
 ### Repository
-- `maintainer/sources.json` — the Claude Code changelog has been reviewed through 2.1.282.
+- `maintainer/sources.json` — baselines updated for all 16 watched pages.
 
 ## [0.2.0] — 2026-09-24
 

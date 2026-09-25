@@ -12,8 +12,8 @@ user-invocable: false
 
 Patterns and standards for creating and distributing Claude Code plugins.
 
-Verified on 2026-09-20 against code.claude.com/docs/en/plugins, /plugins-reference,
-/plugin-marketplaces, /discover-plugins and /sub-agents — 2 open claims, marked
+Verified on 2026-09-25 against code.claude.com/docs/en/plugins, /plugins-reference,
+/plugin-marketplaces, /discover-plugins and /sub-agents — 3 open claims, marked
 **[UNCONFIRMED]** inline.
 
 ---
@@ -259,17 +259,17 @@ Shortcuts: `/plugin market` works in place of `/plugin marketplace`, and `rm` in
 `remove`.
 
 `/plugin` with no recognised subcommand opens an interactive, tabbed panel in the terminal
-CLI. Cycle the tabs with **Tab**, or **Shift+Tab** to go backward. `/plugin list` runs
-without opening it. `/plugin install` opens only that plugin's details view, to pick an
-install scope — not the full manager. `/plugin disable`, `/plugin enable` and
-`/plugin uninstall` do open the panel and leave it open — **Esc** closes it before you type
-another command. **[UNCONFIRMED]** Whether `/plugin validate` and the `/plugin marketplace`
-add/update/remove/list commands also skip the panel isn't stated as plainly: `/plugin validate`
-is described only as running its checks "inline," and the marketplace commands are presented
-as an alternative to the interactive Marketplaces tab, but no sentence says outright that any
-of them never opens the panel. Settings that exist only in the panel — enabling auto-update
-for a marketplace, for instance — have no documented CLI equivalent; the panel is the
-per-user way to change them (administrators can instead set `"autoUpdate": true` on an
+CLI. Press **Tab** to move between tabs. `/plugin list` runs without opening it.
+`/plugin install` opens only that plugin's details view, to pick an install scope — not the
+full manager. `/plugin disable`, `/plugin enable` and `/plugin uninstall` open the panel on
+the **Installed** tab at that plugin and make the change there. **[UNCONFIRMED]** Whether
+**Shift+Tab** cycles the tabs backward, and whether the panel then stays open until **Esc**
+closes it: neither is stated in the docs. `/plugin validate` prints its report inline, and
+`/plugin marketplace add <source>` reports its result and `/plugin marketplace list` prints
+inline; `/plugin marketplace update` and `/plugin marketplace remove` open the
+**Marketplaces** tab. Settings that exist only in the panel — enabling auto-update for a
+marketplace, for instance — have no documented CLI equivalent; the panel is the per-user
+way to change them (administrators can instead set `"autoUpdate": true` on an
 `extraKnownMarketplaces` entry in managed settings).
 
 Install scopes: **User** (all your projects), **Project** (all collaborators — writes
@@ -301,11 +301,12 @@ Synced plugins have IDs of the form `<name>@synced`, and no marketplace can be n
    `marketplace.json`. You control releases completely.
 2. **The community marketplace** (`anthropics/claude-plugins-community`, installed as
    `@claude-community`) — submit via platform.claude.com/plugins/submit (individuals) or
-   claude.ai/admin-settings/directory/submissions/plugins/new (Team/Enterprise). Submissions
-   pass `claude plugin validate` plus automated safety screening; approved plugins are
-   pinned to a commit SHA and CI bumps the pin as you push.
-3. **The official marketplace** (`claude-plugins-official`) is curated by Anthropic at its
-   discretion. There is no application process; the submission forms do NOT add to it.
+   claude.ai/admin-settings/directory/submissions/plugins/new (Team/Enterprise). Run
+   `claude plugin validate` locally before you submit; listed plugins are, in nearly every
+   case, pinned to a specific commit SHA. **[UNCONFIRMED]** Whether submissions also get
+   automated safety screening, and whether CI bumps the pin as you push: the docs say neither.
+3. **The official marketplace** (`claude-plugins-official`) does not take submissions through
+   these forms — they do NOT add to it. If you work with an Anthropic partner contact, ask them about a listing.
 
 Position by outcomes, not features:
 ```
@@ -325,9 +326,10 @@ cp -r .claude/agents my-plugin/
 claude --plugin-dir ./my-plugin
 ```
 
-After migrating, remove the original **agents/** files from `.claude/` — project and user
-agent definitions OVERRIDE same-named plugin agents. Original **skills** do not need
-removing: plugin skills are namespaced, so both remain available.
+After migrating and confirming the plugin works, delete the originals from `.claude/`.
+Skills and agents do not collide while both exist — plugin skills and agents carry the
+`my-plugin:` prefix, so `reviewer` and `my-plugin:reviewer` are two subagents — but hooks
+have no prefix, so a hook left in both `settings.json` and `hooks/hooks.json` runs twice.
 
 ---
 
@@ -335,7 +337,7 @@ removing: plugin skills are namespaced, so both remain available.
 
 | Symptom | Fix |
 |---------|-----|
-| `/plugin` command not found | Update Claude Code: `npm install -g @anthropic-ai/claude-code@latest`, or re-run the native installer |
+| `/plugin` fails at a shell prompt, or replies `/plugin isn't available in this environment` | `/plugin` runs only inside an interactive Claude Code terminal session, not at a shell prompt or in `claude -p` or the Agent SDK. Run `claude` and type it there, or install from your shell with `claude plugin install <plugin>@<marketplace>` |
 | Plugin not loading | Check structure: all dirs at plugin root, not inside `.claude-plugin/`. Check the `/plugin` Errors tab |
 | Skills not appearing after install | Run `/reload-plugins` or restart |
 | Users not receiving an update | `version` not bumped, or their marketplace has auto-update off |
