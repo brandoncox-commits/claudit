@@ -12,8 +12,8 @@ user-invocable: false
 
 Patterns and standards for creating Claude Code subagents.
 
-Verified on 2026-09-20 against code.claude.com/docs/en/sub-agents, /permission-modes,
-/plugins-reference and /hooks — 3 open claims remain, each marked **[UNCONFIRMED]** inline.
+Verified on 2026-09-25 against code.claude.com/docs/en/sub-agents, /permission-modes,
+/plugins-reference and /hooks — 4 open claims remain, each marked **[UNCONFIRMED]** inline.
 A few other claims rest on runtime probes rather than the docs; each says so where it
 appears.
 
@@ -63,7 +63,7 @@ of `bypassPermissions`, `acceptEdits` and `auto`. Plugin-shipped agents cannot s
 | `acceptEdits` | Auto-accepts file edits + common fs commands (`mkdir`, `touch`, `mv`, `cp`) in the working dir / `additionalDirectories` |
 | `plan` | Read-only exploration |
 | `auto` | Classifier auto-approves against the stated request |
-| `dontAsk` | Never prompts; **auto-DENIES** anything not in `permissions.allow` |
+| `dontAsk` | Never prompts; **auto-DENIES** every call that would otherwise prompt. Reads, read-only Bash, `permissions.allow` matches and PreToolUse-hook approvals still run |
 | `bypassPermissions` | Skips prompts, including writes to `.git` and `.claude` |
 
 **`dontAsk` denies `AskUserQuestion` even when explicitly allowed**, along with MCP tools
@@ -182,14 +182,14 @@ Run with `claude --agent <name>`, or the `agent` key in settings.json.
 | Aspect | Main session | Subagent |
 |---|---|---|
 | System prompt | Body **replaces** the Claude Code system prompt | Body + appended environment details |
-| Tools | Full session tools | Restricted per stripping rules |
+| Tools | Session tools, limited by the definition's tool restrictions | Restricted per stripping rules |
 | Context | All prior messages, memory, CLAUDE.md | Fresh: delegation message, full CLAUDE.md hierarchy (including any loaded `AGENTS.md` files), git status snapshot, preloaded skills, sibling roster — but **no prior conversation history** |
-| `AskUserQuestion` | **Available** | Stripped |
+| `AskUserQuestion` | **Available** **[UNCONFIRMED: the docs list it only as stripped from subagents; nothing states that a `--agent` main session keeps it]** | Stripped |
 | `Agent(...)` allowlist | **Honored** | Ignored |
 | `initialPrompt` | Auto-submitted | N/A |
 
-Orchestrators belong in the main session: it is the only place that keeps
-`AskUserQuestion` and honors the spawn allowlist.
+Orchestrators belong in the main session: `AskUserQuestion` is stripped from every
+subagent, and only a main-session agent honors the spawn allowlist.
 
 ---
 

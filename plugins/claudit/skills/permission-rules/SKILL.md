@@ -12,7 +12,7 @@ user-invocable: false
 
 # Permission Rules Reference
 
-Verified on 2026-09-20 against code.claude.com/docs/en/permissions, /permission-modes,
+Verified on 2026-09-25 against code.claude.com/docs/en/permissions, /permission-modes,
 /sub-agents, /settings and /output-styles — 5 open claims, each marked **[UNCONFIRMED]**
 inline: the PowerShell `&` call-operator behaviour (local probe only), "no per-agent allow
 scoping of other tools", the exact `dontAsk` denial-message wording, what concretely happens
@@ -31,7 +31,7 @@ A `dontAsk` denial often does not say *why*: some denials do name the rule (the 
 `deny` → `ask` → `allow`. Evaluated in that order, across every scope.
 
 - A broad deny like `Bash(aws *)` blocks a call **even when a narrower allow matches it**.
-  Deny rules cannot carry allowlist exceptions.
+  Deny rules cannot carry allowlist exceptions, except that a `!` negation inside a same-source `Read`/`Edit` deny or ask list carves paths out of earlier rules there (see Read and Edit).
 - An `ask` rule prompts even when a more specific `allow` also matches.
 - Across scopes too: a user-level deny blocks a project-level allow.
 
@@ -156,8 +156,8 @@ your Windows credentials to the host it names — the same check applies to Powe
 commands. **[UNCONFIRMED]** Whether this also overrides an explicit `allow` rule on some
 other command isn't documented; write the rule you need and test it.
 
-Most network paths also can't be added as working directories at all, for the same
-credential-leak reason — map the share to a drive letter and pass that with `--add-dir`.
+Most network paths also can't be added as working directories at all, because looking
+one up can contact the host it names — map the share to a drive letter and pass that with `--add-dir`.
 
 ### Argument-constraining rules are fragile
 
@@ -170,6 +170,8 @@ arguments.
 For `> file`, `>> file`, `2> file`, the target is checked against your `Edit` allow/deny
 rules, **protected paths**, and the working directories. `Bash(git commit *)` allows the
 command, not the target. A target starting with `~` or containing a glob needs approval.
+
+Claude Code also checks the files a `tee` command writes, including in a pipeline such as `make | tee build.log`. The check covers your `Edit` allow and deny rules, protected paths, and the working directories, so an allow rule such as `Bash(tee *)` doesn't cover a destination outside the working directories. Claude Code checks `tee` targets in v2.1.269 and later.
 
 ---
 
@@ -189,6 +191,8 @@ rule text therefore matches different locations depending on which file holds it
 - An **allow** rule with an unusable pattern approves nothing.
 - A path rule on `Write`, `NotebookEdit`, `Glob` or `MultiEdit` is accepted but never consulted (startup warning, v2.1.210+): write `Edit(path)` or `Read(path)`. A bare `Write` with no path still matches at tool level.
 - Paths approved via "don't ask again" are escaped (`[`, `]`, `*`); rules you write are not.
+- A deny or ask pattern that starts with `!` is a gitignore negation. It carves the paths it matches out of the `path` or `./path` rules listed before it. In one settings file's `deny` list, `Read(*.env)` followed by `Read(!sample.env)` blocks every file whose name ends in `.env` at any depth, except files named `sample.env`. A `!` rule listed first carves nothing out. The carve-out reaches only rules from the same source: a `Read(!.env)` in project settings or in `--disallowedTools` doesn't cancel a `Read(./.env)` deny from managed settings or any other settings file. Two limits: `!` is read relative to the current directory, so `Read(!~/notes/public/**)` carves nothing out of `Read(~/notes/**)`, and a carve-out cannot reopen a file inside a directory that a rule blocks whole.
+- When Claude accesses a symlink, permission rules check two paths: the symlink itself and the file it resolves to. Allow rules apply only when both the symlink path and its target match, so a symlink inside an allowed directory that points outside it still prompts you. Deny rules apply when either the symlink path or its target matches.
 
 ---
 

@@ -11,10 +11,10 @@ user-invocable: false
 
 Diagnostic patterns for Claude Code issues across skills, agents, MCP, hooks, and plugins.
 
-Verified on 2026-09-19 against code.claude.com/docs/en/troubleshooting, /settings and the
-pages each row concerns — 4 open claims, each marked **[UNCONFIRMED]** inline. Rows are
+Verified on 2026-09-25 against code.claude.com/docs/en/troubleshooting, /settings and the
+pages each row concerns — 1 open claim, marked **[UNCONFIRMED]** inline. Rows are
 starting hypotheses to confirm against the user's actual setup, not verdicts. The update
-commands under Diagnostic Commands were verified against /setup on 2026-09-20.
+commands under Diagnostic Commands were verified against /setup on 2026-09-25.
 
 ---
 
@@ -27,7 +27,7 @@ commands under Diagnostic Commands were verified against /setup on 2026-09-20.
 | `/skill-name` not in menu | `user-invocable: false` set | Remove flag if user-invocable is desired |
 | Skill changes not applied | Stale plugin asset, or a `--plugin-dir` plugin | `SKILL.md` text in a skills directory hot-reloads automatically. For a skill folder that is also a plugin, changes to `hooks/`, `.mcp.json`, `agents/` or `output-styles/` need `/reload-plugins`, and so does any edit to a plugin loaded with `--plugin-dir` |
 | Wrong file name | `skill.md` or `SKILL.MD` | Name it exactly `SKILL.md` (whether other casings load is **[UNCONFIRMED]**) |
-| Folder name awkward to invoke | Spaces or capitals | Use kebab-case: `my-skill` not `My Skill` (a convention; the docs state no skill-folder naming rule) |
+| Folder name awkward to invoke | Spaces or capitals | Use kebab-case: `my-skill` not `My Skill` (a convention; the docs state no character or case rule for skill folders, only that the folder name `synced` is reserved) |
 | Angle brackets render badly in a synced skill | Used `<` or `>` in `description` | Escape or remove them. The docs describe this only for display text on claude.ai-synced skills; no error behaviour for local frontmatter is documented |
 | Skill conflicts with another | Same name at different scopes | Higher priority wins: enterprise > user > project. Plugin skills are namespaced and do not collide |
 | `$ARGUMENTS` not working | Not in SKILL.md body | Add `$ARGUMENTS` in body or it auto-appends at end |
@@ -39,10 +39,10 @@ commands under Diagnostic Commands were verified against /setup on 2026-09-20.
 
 | Symptom | Likely Cause | Fix |
 |---------|-------------|-----|
-| Agent not found | Wrong `subagent_type` value | Must match the `name:` field. Plugin agents use a scoped name such as `my-plugin:agent-name` |
+| Agent not found | Wrong agent name | Use the agent's `name:` field, its unique identifier (the filename need not match). Plugin agents use a scoped name such as `my-plugin:agent-name` |
 | Agent ignores instructions | Missing context in prompt | Agents have no conversation history; include all context |
 | Agent tries to ask the user questions | `AskUserQuestion` is not available to subagents | Return a NEEDS_REVIEW-style signal and let the main session ask |
-| Agent spawning other agents | Has Agent tool | Omit `Agent` from `tools`, or add it to `disallowedTools` for workers **[UNCONFIRMED for `disallowedTools`]** |
+| Agent spawning other agents | Has Agent tool | Omit `Agent` from `tools`, or add it to `disallowedTools` for workers |
 | Agent output not parsed | No output contract | Define a fixed result block (e.g. YAML) at the top of the response |
 | Agent takes too long | No turn limit | Set `maxTurns:` in frontmatter; split complex tasks |
 | Wrong model used | Default inheritance | Set `model:` explicitly in frontmatter |
@@ -70,7 +70,7 @@ commands under Diagnostic Commands were verified against /setup on 2026-09-20.
 
 | Symptom | Likely Cause | Fix |
 |---------|-------------|-----|
-| Hook never fires | Wrong event name (case-sensitive) | Check: `PreToolUse`, `PostToolUse`, `Stop`, etc. |
+| Hook never fires | Wrong event name, or a matcher in the wrong case | Check: `PreToolUse`, `PostToolUse`, `Stop`, etc. Matcher matching is case-sensitive: `Bash`, not `bash` |
 | Hook fires but doesn't block | Exit code not 2 | Use explicit `exit 2`; `exit 1` doesn't block |
 | jq: field not found | Wrong JSON path | Debug: `cat > /tmp/hook.json` to inspect stdin |
 | Command not found | Binary not in PATH | Use full path |
@@ -85,7 +85,7 @@ commands under Diagnostic Commands were verified against /setup on 2026-09-20.
 
 | Symptom | Likely Cause | Fix |
 |---------|-------------|-----|
-| `/plugin` command not found | Outdated Claude Code version | Update: `npm install -g @anthropic-ai/claude-code@latest`, or re-run the native installer |
+| `/plugin` command not found or "isn't available in this environment" | Not in an interactive terminal session (`claude -p`, Agent SDK, desktop Code tab, VS Code panel and claude.ai/code have no `/plugin` panel) | Run `claude` in a terminal and type `/plugin`, or use `claude plugin install <plugin>@<marketplace>` from your shell. An outdated install is a further possibility the docs do not state; update with `npm install -g @anthropic-ai/claude-code@latest` or `claude update` |
 | Plugin not loading | Wrong directory structure | All dirs at root; only `plugin.json` in `.claude-plugin/`. Check the `/plugin` Errors tab |
 | Skills not showing after install | Not yet activated | Run `/reload-plugins` or restart |
 | Update not arriving | `version` not bumped, or auto-update off | Third-party marketplaces have auto-update off by default. `/plugin marketplace update` refreshes once; to turn auto-update on, use `/plugin` → Marketplaces → Enable auto-update |
@@ -120,7 +120,7 @@ commands under Diagnostic Commands were verified against /setup on 2026-09-20.
 | Project MCP | `.mcp.json` (repo root) |
 | User/local MCP | `~/.claude.json` |
 | CLAUDE.md (user) | `~/.claude/CLAUDE.md` |
-| CLAUDE.md (project) | `CLAUDE.md` (repo root) **[UNCONFIRMED]** |
+| CLAUDE.md (project) | `./CLAUDE.md` or `./.claude/CLAUDE.md` |
 | Installed plugins | `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/` |
 
 ---
@@ -136,7 +136,7 @@ claude --version                # check version
 claude doctor                   # read-only install + settings diagnostics
 claude update                   # apply a pending update now
 
-# `claude agents` opens the agent view for background sessions. [UNCONFIRMED]
+# `claude agents` opens the agent view for background sessions.
 # It is NOT a listing of agent definitions.
 ```
 

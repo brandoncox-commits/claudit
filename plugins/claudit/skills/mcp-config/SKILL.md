@@ -11,7 +11,7 @@ user-invocable: false
 
 Patterns and standards for wiring MCP servers into Claude Code.
 
-Verified against code.claude.com/docs/en/mcp on 2026-09-20 — 1 open claim, marked
+Verified against code.claude.com/docs/en/mcp on 2026-09-25 — 1 open claim, marked
 **[UNCONFIRMED]** inline.
 
 Two easy mistakes this file guards against: the WebSocket transport `type` is `ws`, not
@@ -45,7 +45,7 @@ Use project scope for shared tools; user scope for personal API keys or private 
 | Transport | When to use | Notes |
 |-----------|-------------|-------|
 | `stdio` | Local process (Python, Node, binary) | Most common; process managed by Claude |
-| `http` | Remote server with stable URL | Stateless; easiest to host. In JSON config, `type` also accepts `streamable-http` as an alias for `http` (the MCP spec's own name for this transport) |
+| `http` | Remote server with stable URL | Recommended option for connecting to remote MCP servers; the most widely supported transport for cloud-based services. In JSON config, `type` also accepts `streamable-http` as an alias for `http` (the MCP spec's own name for this transport) |
 | `sse` | Legacy streaming | Deprecated; use `http` instead |
 | `ws` | Remote server needing a persistent bidirectional connection | The literal `type` value is **`ws`** — writing `websocket` will not work. Accepts the same `url`, `headers`, `headersHelper`, `timeout` and `alwaysLoad` fields as `http` |
 
@@ -166,7 +166,9 @@ Claude Code runs the OAuth flow; `claude mcp logout` clears the stored credentia
 
 ## Project Server Approval
 
-Servers in a project's `.mcp.json` need approval before they connect. The settings keys
+Servers in a project's `.mcp.json` need approval before they connect in interactive
+sessions; in `claude -p`, Agent SDK and cloud sessions Claude Code can't show the prompt
+and loads project-scoped servers without asking. The settings keys
 `enabledMcpjsonServers` and `disabledMcpjsonServers` "control approval of servers defined
 in a project's `.mcp.json` file"; `enableAllProjectMcpServers` approves them all. "A
 cloned repository can't approve its own servers": `enableAllProjectMcpServers` or

@@ -80,7 +80,7 @@ convention, respect it.
 
 ## Agent checks
 
-1. **Frontmatter validity**: `name` and `description` present; `name` kebab-case without
+1. **Frontmatter validity**: `name` and `description` present; `name` kebab-case [UNVERIFIED] without
    colons; `model`, `permissionMode`, `memory`, `effort`, `isolation`, `color` values are
    ones the docs accept (`color` has no `magenta`). No key appears twice. A trailing
    `# comment` on a value line is a `WARNING`: whether Claude Code strips it is

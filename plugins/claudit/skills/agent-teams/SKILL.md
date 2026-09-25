@@ -10,7 +10,7 @@ user-invocable: false
 
 # Agent Teams Reference
 
-Verified against code.claude.com/docs/en/agent-teams on 2026-09-19 — 3 open claims, each
+Verified against code.claude.com/docs/en/agent-teams on 2026-09-25 — 3 open claims, each
 marked **[UNCONFIRMED]** inline.
 
 ---

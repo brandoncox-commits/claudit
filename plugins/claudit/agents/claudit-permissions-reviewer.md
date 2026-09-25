@@ -126,8 +126,9 @@ appears to do**, and what it really allows.
 Every finding's `effect` is plain English, full sentences, no rule syntax. It states:
 
 - what becomes possible (or stops being possible) that was not before;
-- **who else gains or loses it** — allow rules are session-wide and inherited by subagents,
-  so say "every agent that can run shell commands", not just the intended one;
+- **who else gains or loses it** — allow rules apply to the whole session, and a subagent's
+  tool calls are checked against the session's rules (documented for auto mode, not stated
+  for other modes), so say "every agent that can run shell commands", not just the intended one;
 - what could go wrong if it is broader than intended;
 - what is explicitly not changed.
 

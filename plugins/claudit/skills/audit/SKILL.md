@@ -51,7 +51,7 @@ Use `Glob` (and `Read` only where needed) to list what exists. Do not dump file 
 into the conversation.
 
 User scope (`~` = the user's home directory):
-- `~/.claude/settings.json`, `~/.claude/settings.local.json`
+- `~/.claude/settings.json`
 - `~/.claude/agents/**/*.md`, `~/.claude/skills/*/SKILL.md`, `~/.claude/commands/*.md`,
   `~/.claude/output-styles/*.md`, `~/.claude/CLAUDE.md`
 - `~/.claude.json` — MCP servers at user/local scope only. It is large and holds other
