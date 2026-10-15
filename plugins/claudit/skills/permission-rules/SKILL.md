@@ -12,12 +12,12 @@ user-invocable: false
 
 # Permission Rules Reference
 
-Verified on 2026-09-25 against code.claude.com/docs/en/permissions, /permission-modes,
+Verified on 2026-10-15 against code.claude.com/docs/en/permissions, /permission-modes,
 /sub-agents, /settings and /output-styles — 5 open claims, each marked **[UNCONFIRMED]**
 inline: the PowerShell `&` call-operator behaviour (local probe only), "no per-agent allow
 scoping of other tools", the exact `dontAsk` denial-message wording, what concretely happens
 to an `allow` entry that uses the `Tool(param:value)` form, and whether a UNC path overrides
-an explicit `allow` rule on another command.
+an explicit `allow` rule on a shell command (file-tool reads are now documented).
 
 A `dontAsk` denial often does not say *why*: some denials do name the rule (the docs say, in the WebFetch section on artifact reads, "When a rule blocks a read, the denial names the rule"), but the `dontAsk` wording is not documented. The failures observed under `dontAsk` read along the lines of
 "Permission to use X has been denied because Claude Code is running in don't ask mode"
@@ -153,8 +153,14 @@ invocation.
 In Manual mode, a command from the built-in read-only set still prompts when its arguments
 include a network (UNC) path such as `\\server\share\file`, because accessing one can send
 your Windows credentials to the host it names — the same check applies to PowerShell tool
-commands. **[UNCONFIRMED]** Whether this also overrides an explicit `allow` rule on some
-other command isn't documented; write the rule you need and test it.
+commands.
+
+File-reading tools (Read, Grep, Glob) get their own check for network paths (a UNC path on
+Windows, a `/net` automount path on macOS/Linux). In v2.1.292 and later an allow rule (even a
+bare `Read`), a PreToolUse hook returning `"allow"`, and auto mode all leave the prompt in
+place; `dontAsk` denies the read; `bypassPermissions` skips the prompt. **[UNCONFIRMED]**
+Whether an allow rule overrides this check for a *shell command* on another program isn't
+documented; write the rule you need and test it.
 
 Most network paths also can't be added as working directories at all, because looking
 one up can contact the host it names — map the share to a drive letter and pass that with `--add-dir`.

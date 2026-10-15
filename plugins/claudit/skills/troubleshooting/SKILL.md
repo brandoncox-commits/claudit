@@ -11,10 +11,10 @@ user-invocable: false
 
 Diagnostic patterns for Claude Code issues across skills, agents, MCP, hooks, and plugins.
 
-Verified on 2026-09-25 against code.claude.com/docs/en/troubleshooting, /settings and the
+Verified on 2026-10-15 against code.claude.com/docs/en/troubleshooting, /settings and the
 pages each row concerns — 1 open claim, marked **[UNCONFIRMED]** inline. Rows are
 starting hypotheses to confirm against the user's actual setup, not verdicts. The update
-commands under Diagnostic Commands were verified against /setup on 2026-09-25.
+commands under Diagnostic Commands were verified against /setup on 2026-10-15.
 
 ---
 

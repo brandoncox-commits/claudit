@@ -4,6 +4,26 @@ All notable changes to Claudit. Versions follow [semantic versioning](https://se
 Guidance changes (a reference skill corrected against the live docs) are listed under
 **Guidance**, with the doc page that changed.
 
+## [0.2.2] — 2026-10-15
+
+Guidance release from a doc-drift check. All 16 watched documentation pages were re-verified:
+12 of 16 dependent files were confirmed still correct and 4 files received 6 corrections. All
+page hashes in `maintainer/sources.json` were re-baselined, the Claude Code changelog is
+reviewed through 2.1.300, and the verification stamps were re-dated 2026-10-15. Doc-drift
+issues #21-#37 are covered by this baseline.
+
+### Guidance
+- permission-rules — documented the network (UNC) path prompt for file-reading tools
+  (v2.1.292+): allow rules, PreToolUse allow hooks and auto mode do not skip the prompt, and
+  dontAsk denies.
+- skill-builder — corrected the `name` frontmatter row: `name` sets the command in personal
+  and project skills, and the directory name also invokes it.
+- plugin-builder — updated the plugin agent supported-fields list (autoCompactWindow added;
+  only experimental.cacheTtl is supported) and the distribution section now points to the
+  claude.ai/directory/manage developer-portal submission route.
+- claudit-config-reviewer — added a hook exit-code check (exit 2 cannot be overridden by JSON)
+  and a failure-mode check (onFailure: "block", v2.1.295+).
+
 ## [0.2.1] — 2026-09-25
 
 Guidance-only release. No agent, command or hook behaviour changed. All 16 documentation pages

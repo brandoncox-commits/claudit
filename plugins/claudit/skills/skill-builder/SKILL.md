@@ -12,7 +12,7 @@ user-invocable: false
 
 Patterns and standards for creating Claude Code skills (Agent Skills open standard).
 
-Verified against code.claude.com/docs/en/skills on 2026-09-25 — 8 open claims, each
+Verified against code.claude.com/docs/en/skills on 2026-10-15 — 8 open claims, each
 marked **[UNCONFIRMED]** or **[UNVERIFIED]** inline. Items marked *Convention* are good
 practice, not requirements — report gaps against them as suggestions, never as errors.
 
@@ -65,7 +65,7 @@ description: >-         # the trigger. Combined description + when_to_use capped
 
 | Field | Required | Notes |
 |-------|----------|-------|
-| `name` | No | Display label; defaults to folder name. In a personal or project skill the command name comes from the directory, not this field. In a plugin skill, `name` sets the last segment of the command (`/plugin-name:name`); for a plugin-root SKILL.md it supplies the whole final segment. |
+| `name` | No | Command name shown in the `/` menu; defaults to the directory name. In a personal or project skill, `name` sets the command you type (unless another command already uses that name) and the directory name also invokes the skill. In a plugin skill, `name` sets the last segment of the command (`/plugin-name:name`; the bare `/name` also works unless taken); for a plugin-root SKILL.md it supplies the whole final segment, falling back to the plugin directory name. |
 | `description` | Recommended | WHAT + WHEN + triggers. Combined `description` + `when_to_use` capped at 1536 chars in the listing (configurable via `skillListingMaxDescChars`). If omitted, the first non-empty line of the body is used. |
 | `when_to_use` | No | Extra trigger context / example requests; appended to `description`, counts toward the cap. |
 | `disable-model-invocation` | No | `true` = only the user can invoke (manual `/skill-name`); also blocks preload into subagents. |

@@ -12,7 +12,7 @@ user-invocable: false
 
 Patterns and standards for creating Claude Code subagents.
 
-Verified on 2026-09-25 against code.claude.com/docs/en/sub-agents, /permission-modes,
+Verified on 2026-10-15 against code.claude.com/docs/en/sub-agents, /permission-modes,
 /plugins-reference and /hooks — 4 open claims remain, each marked **[UNCONFIRMED]** inline.
 A few other claims rest on runtime probes rather than the docs; each says so where it
 appears.
