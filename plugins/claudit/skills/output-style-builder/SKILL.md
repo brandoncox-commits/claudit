@@ -10,7 +10,7 @@ user-invocable: false
 
 # Output Style Builder Reference
 
-Verified against code.claude.com/docs/en/output-styles on 2026-09-25 — 0 open claims.
+Verified against code.claude.com/docs/en/output-styles on 2026-10-15 — 0 open claims.
 
 Common stale beliefs this file corrects: output styles are NOT skills and do not live in
 `~/.claude/skills/`; there are only four frontmatter fields; and switching styles no longer

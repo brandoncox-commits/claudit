@@ -91,9 +91,10 @@ flag it if existing config has that shape.
 2. **Hook type fields**: `command` needs `command`; `prompt` needs `prompt` (a `prompt` hook
    is a single-turn model evaluation that returns a decision — it does not inject text and
    has no `command`); `http` needs `url`.
-3. **Blocking**: `exit 2` blocks by code alone. Valid JSON on stdout can also decide the
-   outcome whatever the exit code, so a `PreToolUse` hook that exits 0 and prints
-   `permissionDecision: "deny"` does block; never raise it as non-blocking. A hook meant to
+3. **Blocking**: `exit 2` blocks by code alone, and valid JSON printed alongside it cannot
+   override the block (even `permissionDecision: "allow"` does not let the action through).
+   At exit 0, valid JSON on stdout decides the outcome, so a `PreToolUse` hook that exits 0
+   and prints `permissionDecision: "deny"` does block; never raise it as non-blocking. A hook meant to
    block that exits 1 with no valid JSON decision is an ERROR. A hook meant to give Claude feedback that prints *plain-text* stdout on exit 0 is
    also an ERROR — plain stdout is swallowed into the debug log for every event except
    `UserPromptSubmit`, `UserPromptExpansion`, `SessionStart` and `PostModelSwitch`. This does
@@ -111,9 +112,10 @@ flag it if existing config has that shape.
    trust for the folder the agent file came from; user-level agents (`~/.claude/agents/`)
    and agents passed with `--agents` run without that step. Plugin agents cannot declare hooks.
 7. **Failure mode**: what happens to every tool call if the hook's command is missing,
-   slow, or errors. A missing or non-executable script, a crash, or a timeout is a
-   non-blocking error, so a hook meant as a gate silently lets the call through (fail open);
-   say so. Don't open a script that is not in your prompt: if the command names one, list it under
+   slow, or errors. By default (`onFailure: "continue"`) a missing or non-executable script,
+   a crash, or a timeout is a non-blocking error, so a hook meant as a gate silently lets the
+   call through (fail open); say so. A hook that sets `onFailure: "block"` (v2.1.295 or later)
+   blocks instead; read the field literally. Don't open a script that is not in your prompt: if the command names one, list it under
    `unverified_claims` rather than assuming it exists.
 8. **Loose agent files with `hooks:`, `mcpServers:` or `permissionMode:` frontmatter**: if
    the file looks third-party, add a `needs_other_surface` note for the supply-chain

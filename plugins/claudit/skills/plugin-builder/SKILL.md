@@ -12,7 +12,7 @@ user-invocable: false
 
 Patterns and standards for creating and distributing Claude Code plugins.
 
-Verified on 2026-09-25 against code.claude.com/docs/en/plugins, /plugins-reference,
+Verified on 2026-10-15 against code.claude.com/docs/en/plugins, /plugins-reference,
 /plugin-marketplaces, /discover-plugins and /sub-agents — 3 open claims, marked
 **[UNCONFIRMED]** inline.
 
@@ -103,9 +103,9 @@ as is `<dollar>{CLAUDE_SKILL_DIR}` (the skill's own subdirectory). In this file 
 
 ## Agents in Plugins
 Plugin agents support only: `name`, `description`, `model`, `effort`, `maxTurns`,
-`tools`, `disallowedTools`, `skills`, `memory`, `background`, `omitClaudeMd`, `color`,
-`experimental`, and `isolation` (the only valid value is `"worktree"`). `initialPrompt` is
-also not supported.
+`autoCompactWindow`, `tools`, `disallowedTools`, `skills`, `memory`, `background`,
+`omitClaudeMd`, `color`, `isolation` (the only valid value is `"worktree"`), and the
+`cacheTtl` key of `experimental`. `initialPrompt` is also ignored.
 
 **For security reasons, `hooks`, `mcpServers`, and `permissionMode` are not supported
 for plugin-shipped agents.** A plugin agent that declares them does not get them. Enforce
@@ -299,14 +299,15 @@ Synced plugins have IDs of the form `<name>@synced`, and no marketplace can be n
 ## Distribution
 1. **Your own marketplace** — a public (or private) GitHub repo containing
    `marketplace.json`. You control releases completely.
-2. **The community marketplace** (`anthropics/claude-plugins-community`, installed as
-   `@claude-community`) — submit via platform.claude.com/plugins/submit (individuals) or
-   claude.ai/admin-settings/directory/submissions/plugins/new (Team/Enterprise). Run
-   `claude plugin validate` locally before you submit; listed plugins are, in nearly every
-   case, pinned to a specific commit SHA. **[UNCONFIRMED]** Whether submissions also get
-   automated safety screening, and whether CI bumps the pin as you push: the docs say neither.
+2. **Anthropic's directory** — submit from the developer portal at
+   claude.ai/directory/manage (requires a paid claude.ai plan; on Team/Enterprise an Owner
+   submits, or grants the Directory permission). Run `claude plugin validate ./your-plugin
+   --strict` first; the portal applies extra directory rules the CLI does not check. A listed
+   plugin reaches Claude Code users through account sync as `<name>@synced`. The separate
+   community marketplace (`anthropics/claude-plugins-community`, installed as
+   `@claude-community`) holds third-party plugins their authors submitted to Anthropic.
 3. **The official marketplace** (`claude-plugins-official`) does not take submissions through
-   these forms — they do NOT add to it. If you work with an Anthropic partner contact, ask them about a listing.
+   the directory portal. If you work with an Anthropic partner contact, ask them about a listing.
 
 Position by outcomes, not features:
 ```

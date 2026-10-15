@@ -11,7 +11,7 @@ user-invocable: false
 
 Patterns and standards for wiring MCP servers into Claude Code.
 
-Verified against code.claude.com/docs/en/mcp on 2026-09-25 — 1 open claim, marked
+Verified against code.claude.com/docs/en/mcp on 2026-10-15 — 1 open claim, marked
 **[UNCONFIRMED]** inline.
 
 Two easy mistakes this file guards against: the WebSocket transport `type` is `ws`, not
