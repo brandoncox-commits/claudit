@@ -3,6 +3,10 @@
 
 Fails (exit 1) on:
   - invalid JSON in marketplace.json / plugin.json / sources.json
+  - sources.json / snapshot problems (schema 2 only): a missing, unparsable, unnormalised or
+    hash-mismatched snapshot, a header `verified` that differs from sources.json, a page with
+    dependents but no baseline, a page slug "changelog", a `covers` entry that does not
+    resolve to plugins/claudit/<c>/SKILL.md or plugins/claudit/<c>.md, an orphan snapshot
   - plugin.json version that is not semver
   - a plugin agent declaring permissionMode, hooks or mcpServers (unsupported in plugins)
   - an agent or skill missing name/description frontmatter
@@ -22,6 +26,10 @@ import os
 import re
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import doc_classify as dc  # noqa: E402
+import doc_watch as dw  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = ROOT / "plugins" / "claudit"
@@ -76,13 +84,88 @@ def version_tuple(v: str) -> tuple[int, ...]:
     return tuple(int(x) for x in v.split("."))
 
 
+_COVER_RE = re.compile(r"[A-Za-z0-9._-]+(/[A-Za-z0-9._-]+)*\Z")
+
+
+def cover_resolves(cover: str, plugin: Path) -> bool:
+    """`skills/x` -> plugins/claudit/skills/x/SKILL.md; `agents/y` -> plugins/claudit/agents/y.md."""
+    if not isinstance(cover, str) or not _COVER_RE.match(cover):
+        return False
+    if any(part in (".", "..") for part in cover.split("/")):
+        return False
+    return (plugin / cover / "SKILL.md").is_file() or (plugin / f"{cover}.md").is_file()
+
+
+def snapshot_problems(sources: dict, root: Path = ROOT) -> list[str]:
+    """Problems with sources.json and maintainer/snapshots (schema 2); [] when consistent."""
+    try:
+        dw.validate_sources(sources)
+    except dw.ConfigError as exc:
+        return [f"maintainer/sources.json: {exc}"]
+    plugin = root / "plugins" / "claudit"
+    snaps = root / "maintainer" / "snapshots"
+    problems: list[str] = []
+    expected: set[str] = set()
+    for url, entry in sources["pages"].items():
+        s = dc.slug(url)
+        if s == dw.CHANGELOG_TOKEN:
+            problems.append(f"{url}: a page slug may not be '{dw.CHANGELOG_TOKEN}' "
+                            "(reserved for the changelog marker in the digest state)")
+        for cover in entry["covers"]:
+            if not cover_resolves(cover, plugin):
+                problems.append(f"{url}: covers entry '{cover}' does not resolve to "
+                                f"plugins/claudit/{cover}/SKILL.md or plugins/claudit/{cover}.md")
+        if entry["sha256"] is None:
+            if entry["covers"]:
+                problems.append(f"{url}: has dependents (covers) but no baseline "
+                                "(sha256 is null); run --rebaseline")
+            continue
+        expected.add(s)
+        path = snaps / f"{s}.md"
+        label = f"maintainer/snapshots/{s}.md"
+        if not path.is_file():
+            problems.append(f"{label}: missing snapshot for {url}")
+            continue
+        try:
+            snap = dw.load_snapshot(path)
+        except dw.SnapshotError as exc:
+            problems.append(f"{label}: {exc}")
+            continue
+        if snap.source != url:
+            problems.append(f"{label}: header source {snap.source} is not {url}")
+        if snap.normaliser != dc.NORMALISER_VERSION:
+            problems.append(f"{label}: header normaliser {snap.normaliser} is not "
+                            f"{dc.NORMALISER_VERSION}")
+        if snap.verified != entry["verified"]:
+            problems.append(f"{label}: header verified {snap.verified} differs from "
+                            f"sources.json verified {entry['verified']}")
+        if dc.normalise(snap.body) != snap.body:
+            problems.append(f"{label}: body is not normalised (normalise(body) != body); "
+                            "it was edited by hand")
+        if dc.sha256(snap.body) != entry["sha256"]:
+            problems.append(f"{label}: sha256 of the body does not match sources.json")
+    if snaps.is_dir():
+        for path in sorted(snaps.iterdir()):
+            if path.suffix != ".md" or path.stem not in expected:
+                problems.append(f"maintainer/snapshots/{path.name}: orphan snapshot "
+                                "(no page in sources.json with a baseline uses it)")
+    return problems
+
+
+def check_snapshots(sources: dict) -> None:
+    for problem in snapshot_problems(sources):
+        err(problem)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--base-version")
     args = ap.parse_args()
 
     load_json(ROOT / ".claude-plugin" / "marketplace.json")
-    load_json(ROOT / "maintainer" / "sources.json")
+    sources = load_json(ROOT / "maintainer" / "sources.json")
+    if sources is not None:
+        check_snapshots(sources)
     manifest = load_json(PLUGIN / ".claude-plugin" / "plugin.json") or {}
     version = str(manifest.get("version", ""))
     if not SEMVER.match(version):
