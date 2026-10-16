@@ -87,6 +87,8 @@ and when. A daily job compares those pages with their verified versions and flag
 have changed; the maintainer re-checks the affected guidance, and a new version ships. The
 [CHANGELOG](CHANGELOG.md) lists each guidance change and the doc page behind it.
 
+The documentation snapshots in `maintainer/snapshots/` are copies of Anthropic's Claude Code documentation, kept only for doc-drift detection; they are not covered by this repository's licence. See `maintainer/NOTICE-snapshots.md`.
+
 Guidance marked **partially verified** or **not yet audited** in `/claudit:about` is
 used, but its findings are labelled with lower confidence.
 

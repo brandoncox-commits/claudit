@@ -4,6 +4,46 @@ All notable changes to Claudit. Versions follow [semantic versioning](https://se
 Guidance changes (a reference skill corrected against the live docs) are listed under
 **Guidance**, with the doc page that changed.
 
+## [0.2.3] — 2026-10-16
+
+Repository tooling release with no change to Claudit's skills or agents. The skills and mcp
+documentation pages changed after the 2026-10-15 baseline, so all five dependent files
+(skill-builder, claudit-agents-reviewer and claudit-designer for skills; mcp-config and
+claudit-config-reviewer for mcp) were re-verified and confirmed still correct, and both pages
+were re-baselined 2026-10-16. The other 14 pages are unchanged since 2026-10-15. The Claude Code
+changelog is reviewed through 2.1.301. Doc-drift issues #39-#41 are covered by this baseline.
+
+### Guidance
+- No guidance text changed in this release.
+
+### Repository
+- Doc-watch redesign. `maintainer/doc_watch.py` no longer hashes whole pages and opens one
+  issue per page. Each page is compared with a verified snapshot (`maintainer/snapshots/`),
+  section by section, and every change is classified: MAJOR (a table row, code fence, code
+  token, version, number, modal word such as can/cannot, link target, heading, or a section
+  rewritten by more than 40%) or MINOR (typos, rewording, link text). Whitespace-only edits
+  no longer count. Minor changes escalate to MAJOR if they add up to more than 15% of a page
+  or stay unreviewed for more than 30 days. Fetch anomalies (empty or HTML responses, truncated
+  or sharply shorter pages, 404/410, a page unreachable for 3 days) are reported as MAJOR
+  instead of being hashed. Truncated reads, such as the hooks page, can no longer abort a run
+  or be baselined.
+- One rolling issue, "doc-drift: digest", replaces the per-page issues: it shows the trimmed
+  diff and the dependent files for each page that needs a check, with MINOR changes folded
+  into a collapsed section. The state lives in the issue body, and a comment is posted only
+  when a page newly becomes MAJOR. New Claude Code changelog versions are reported in the same
+  digest. `--close-legacy` closes the old per-page issues once at cutover.
+- `maintainer/sources.json` moves to schema 2; each baselined page has a snapshot file, written
+  and verified only by `doc_watch.py --rebaseline` (which fetches several times and refuses
+  unstable or anomalous pages; `--rebaseline --migrate` converts the old hashes). `--print-hashes`
+  is deprecated and will be removed in the next release.
+- `maintainer/check_repo.py` now checks the snapshots (hash, header, normalisation, orphans),
+  that every `covers` entry resolves to a real plugin file, and that no page has dependents but
+  no baseline. CI runs the new `maintainer/tests` unit tests.
+- Workflow `doc-watch.yml`: one run at a time, a 45-minute timeout, and a 14-day shadow phase in
+  which the new digest runs beside the old per-page issues, writing only to a silent state issue
+  and the step summary. Workflow permissions are unchanged.
+- Added `maintainer/NOTICE-snapshots.md` stating the copyright status of the documentation snapshots and how to request their removal.
+
 ## [0.2.2] — 2026-10-15
 
 Guidance release from a doc-drift check. All 16 watched documentation pages were re-verified:
