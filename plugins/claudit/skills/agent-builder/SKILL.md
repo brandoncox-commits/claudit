@@ -14,8 +14,8 @@ Patterns and standards for creating Claude Code subagents.
 
 Verified on 2026-10-15 against code.claude.com/docs/en/sub-agents, /permission-modes,
 /plugins-reference and /hooks; re-audited 2026-10-30 (plan-mode inheritance, skills
-reachability and foreground/background corrected; stamp not renewed) — 8 open claims
-remain, each marked **[UNCONFIRMED]** inline.
+reachability and foreground/background corrected; changelog 2.1.302-2.1.314 reviewed; stamp not renewed) — 11 open claims
+remain (12 inline markers; the plugin-hooks version claim appears twice), each marked **[UNCONFIRMED]** or **[UNVERIFIED]** inline.
 A few other claims rest on runtime probes rather than the docs; each says so where it
 appears.
 
@@ -69,7 +69,7 @@ of `bypassPermissions`, `acceptEdits`, `auto` and `plan`. Plugin-shipped agents 
 | `plan` | Read-only exploration |
 | `auto` | Classifier auto-approves against the stated request |
 | `dontAsk` | Never prompts; **auto-DENIES** every call that would otherwise prompt. Reads, read-only Bash, `permissions.allow` matches and PreToolUse-hook approvals still run |
-| `bypassPermissions` | Skips prompts, including writes to `.git` and `.claude` |
+| `bypassPermissions` | Skips prompts, including writes to `.git` and `.claude`. In the Desktop app and VS Code a dangerous `rm` or `rmdir` is denied at once with a rewrite hint instead of prompting (v2.1.309+) **[UNVERIFIED: which commands count as dangerous]** |
 
 **`dontAsk` denies `AskUserQuestion` even when explicitly allowed**, along with MCP tools
 marked `requiresUserInteraction`. An orchestrator in `dontAsk` cannot talk to the user.
@@ -125,7 +125,7 @@ Only `name` and `description` are required.
 | `memory` | `user` / `project` / `local`. Enables cross-session learning. |
 | `background` | `true` keeps the agent in background even when foreground is requested. |
 | `effort` | `low` / `medium` / `high` / `xhigh` / `max`. |
-| `autoCompactWindow` | Accepted range 100000-1000000 (v2.1.296+) **[UNCONFIRMED: exact semantics — not described in the audit]**. |
+| `autoCompactWindow` | Accepted range 100000-1000000 (v2.1.296+). Since v2.1.312 a subagent's value lowers the window set by `CLAUDE_CODE_AUTO_COMPACT_WINDOW` (before that it had no effect when the variable was set); it never raises that window. The variable accepts `k` and `M` suffixes such as `200k` and warns on out-of-range values (v2.1.304). **[UNVERIFIED: behaviour when the variable is unset, taken from the 2.1.312 changelog only; settle on /docs/en/sub-agents.]** |
 | `isolation` | `worktree` runs in an isolated git worktree copy. |
 | `color` | Optional. `red` / `blue` / `green` / `yellow` / `purple` / `orange` / `pink` / `cyan`. There is no `magenta`. |
 | `initialPrompt` | Auto-submitted first turn when run as main session (`--agent`). |
@@ -331,10 +331,18 @@ independently required is not established here — that lives in the tools refer
 this file's sources. Every documented example supplies all three; do the same.
 
 **Foreground vs background.** With nothing configured, a subagent Claude spawns from the
-main conversation starts in the background. In `claude -p` and the Agent SDK, Claude can
-wait for a subagent on its own judgment or when asked. In interactive terminal, VS Code and
-desktop sessions fork mode is on by default (v2.1.302+; interactive terminal since
-v2.1.232) and Claude cannot wait; set `CLAUDE_CODE_FORK_SUBAGENT=0` to let it wait.
+main conversation starts in the background. Fork mode (`subagent_type: "fork"`) is on by
+default in the interactive terminal (since v2.1.232) and, since v2.1.302, also in `claude -p`,
+the Agent SDK, the desktop app and VS Code; `CLAUDE_CODE_FORK_SUBAGENT=0` turns it off, and
+`claude mcp serve` never offers it. Since v2.1.302 the desktop app and VS Code always run the
+main conversation's subagents in the background, as the terminal does, rather than letting
+Claude choose, and a subagent's own `Agent` calls in `claude -p`, the Agent SDK, the desktop
+app and VS Code run in the foreground by default. In the interactive terminal Claude cannot
+wait for a main-conversation subagent; set `CLAUDE_CODE_FORK_SUBAGENT=0` to let it wait.
+**[UNVERIFIED: whether Claude can still wait for a main-conversation subagent in `claude -p`
+and the Agent SDK now that fork mode is on there, and whether `CLAUDE_CODE_FORK_SUBAGENT=0`
+restores waiting in the desktop app and VS Code; the 2.1.302 changelog does not say. Settle
+on /docs/en/sub-agents.]**
 **[UNCONFIRMED: whether the Agent tool still exposes a `run_in_background` parameter; the
 sub-agents page no longer mentions it.]**
 

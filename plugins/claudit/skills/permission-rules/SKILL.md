@@ -13,8 +13,9 @@ user-invocable: false
 # Permission Rules Reference
 
 Verified on 2026-10-15 against code.claude.com/docs/en/permissions, /permission-modes,
-/sub-agents, /settings and /output-styles — 5 open claims, each marked **[UNCONFIRMED]**
-inline: the PowerShell `&` call-operator behaviour (local probe only), "no per-agent allow
+/sub-agents, /settings and /output-styles; re-audited 2026-10-30 (changelog 2.1.302-2.1.314
+reviewed; stamp not renewed) — 5 open claims marked **[UNCONFIRMED]** inline, plus one
+**[UNVERIFIED]** (the `blockWritesOutsideWorkingDirectories` setting and whether the fences cover Bash redirects): the PowerShell `&` call-operator behaviour (local probe only), "no per-agent allow
 scoping of other tools", the exact `dontAsk` denial-message wording, what concretely happens
 to an `allow` entry that uses the `Tool(param:value)` form, and whether a UNC path overrides
 an explicit `allow` rule on a shell command (file-tool reads are now documented).
@@ -297,6 +298,26 @@ miss; nothing fails at the moment the rule should have matched.
 `permissions.allow`, `permissions.additionalDirectories`, and most `env` values from a
 *project* settings file apply only after the folder is trusted. `deny` and `ask` apply
 immediately. An untracked `settings.local.json` does not wait for trust; a tracked one does.
+
+---
+
+## Working-directory fences
+
+`permissions.blockReadsOutsideWorkingDirectories` (Boolean; scope: any settings file; default
+unset; v2.1.257+) makes the file tools refuse reads outside the working directories in every
+permission mode, including `bypassPermissions`: Read, Grep, Glob and LSP are denied and Claude is
+told to ask for `/add-dir`. A `true` in any file applies, so a repository can turn it on for itself
+but cannot lift yours; `false` is the same as unset. In auto mode Claude Code offers to write `true`
+the first time Claude reads outside the working directories. Directories added with `--add-dir`,
+`/add-dir`, or `additionalDirectories` in user or managed settings count as working directories;
+`additionalDirectories` set only in repository settings (`.claude/settings.json`, or a tracked or
+non-git `.claude/settings.local.json`) do not. The block does not refuse shell commands the same way:
+an untraceable Bash command still prompts, and with sandboxing on, sandboxed commands lose read access to
+home and the other user-file roots (/docs/en/settings-reference). Since v2.1.314
+`permissions.blockWritesOutsideWorkingDirectories` is reported to do the same for writes (Write, Edit,
+NotebookEdit). **[UNVERIFIED: the write setting appears only in the v2.1.314 changelog; it is not on
+/docs/en/settings-reference (checked 2026-10-30). Whether either setting fences Bash redirects is not
+stated on that page.]**
 
 ---
 

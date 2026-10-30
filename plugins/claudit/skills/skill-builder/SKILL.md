@@ -13,7 +13,8 @@ user-invocable: false
 Patterns and standards for creating Claude Code skills (Agent Skills open standard).
 
 Verified against code.claude.com/docs/en/skills on 2026-10-15; re-audited 2026-10-30
-(angle-bracket handling and `effort` corrected; stamp not renewed) — 10 open claims, each
+(angle-bracket handling and `effort` corrected; changelog 2.1.302-2.1.314 reviewed; stamp
+not renewed) — 13 open claims, each
 marked **[UNCONFIRMED]** or **[UNVERIFIED]** inline. Items marked *Convention* are good
 practice, not requirements — report gaps against them as suggestions, never as errors.
 
@@ -71,7 +72,7 @@ description: >-         # the trigger. Combined description + when_to_use capped
 | `when_to_use` | No | Extra trigger context / example requests; appended to `description`, counts toward the cap. |
 | `disable-model-invocation` | No | `true` = only the user can invoke (manual `/skill-name`); also blocks preload into subagents. |
 | `user-invocable` | No | `false` = only Claude can invoke it: hidden from the `/` menu and not run when you type `/name` (background knowledge only). Claude can still invoke it through the Skill tool; set `disable-model-invocation: true` to prevent that. |
-| `allowed-tools` | No | Tools Claude can use without prompting while the skill is active. Space/comma string or YAML list. |
+| `allowed-tools` | No | Tools Claude can use without prompting while the skill is active. Space/comma string or YAML list. Under a policy that allows hooks from plugins only, a skill used in the main conversation whose hooks are kept out no longer gets its `allowed-tools` (v2.1.304). |
 | `disallowed-tools` | No | Tools removed from the pool while the skill is active. Clears on next message. |
 | `model` | No | Same values as `/model`, or `inherit`. Applies for the rest of the current turn only. |
 | `effort` | No | `low` / `medium` / `high` / `xhigh` / `max` (depends on model). Applies for the current turn; does not override `CLAUDE_CODE_EFFORT_LEVEL`. |
@@ -100,7 +101,7 @@ frontmatter key; Claude Code ignores it, so it has no effect", never as an ERROR
 skill is or will be published to claude.ai or the Skills API, the same key **is** a
 documented hard failure: raise that at real severity and cite the six-field spec.
 
-Avoid angle brackets (`<` `>`) in `description` and `when_to_use`: Claude Code displays them as `&lt;` and `&gt;`. Use square brackets, or move a placeholder to `argument-hint`. Claude Code also escapes them in text that reaches Claude so it can't imitate internal formatting (requires v2.1.228+).
+Avoid angle brackets (`<` `>`) in `description` and `when_to_use`: Claude Code displays them as `&lt;` and `&gt;`. Use square brackets, or move a placeholder to `argument-hint`. For skills synced from claude.ai, Claude Code (v2.1.228+) also escapes them in text that reaches Claude so it can't imitate internal formatting **[UNVERIFIED: the docs describe that escaping only for synced skills, not local ones]**.
 
 For skills uploaded to claude.ai or the Skills API, `name` may not contain the reserved words `claude` or `anthropic` **[UNCONFIRMED — not on the Claude Code skills page]**.
 
@@ -202,19 +203,28 @@ Escape a literal `$` before a digit with a backslash.
 - Project skills load from `.claude/skills/` in the starting directory **and every parent
   directory** up to the repo root
 - Nested `.claude/skills/` **below** the starting point load when Claude first reads or
-  edits a file in that subdirectory. `/add-dir <path>` preloads them (v2.1.257+)
+  edits a file in that subdirectory. `/add-dir <path>` preloads them (v2.1.257+). Per-directory
+  and `paths:` skills are also found after a Bash `cd` deeper into a git repository (v2.1.312)
+  **[UNVERIFIED: mechanism]**
 - A nested skill sharing a root skill's name stays available under a directory-qualified
   name (`/apps/web:deploy`); the root keeps the bare `/deploy`
+- A skill in an `--add-dir` folder whose name another skill already holds is offered as
+  `<folder>:<name>` (v2.1.309)
 - Folder name `synced` is **reserved**, in any capitalization. Claude Code uses `~/.claude/skills/synced/` for skills downloaded from claude.ai and skips a skill you author at that name in the enterprise, personal, and project locations
 - Synced skills: in terminal sessions where you sign in with your claude.ai account, Claude Code downloads your account's skills into that folder in the background when the session starts. Syncing in terminal sessions requires v2.1.273 or later, and `syncClaudeAiSkills` set to `false` in user settings stops it on a machine. A synced skill runs as `/anthropic-skills:<name>` or as `/<name>`; when another command has that short name, `/<name>` runs the other command and the synced skill runs only under its full name. For an audit: an unexpected skill in `~/.claude/skills/synced/` is most likely a synced claude.ai account skill (possibly one the user created on claude.ai), not one authored on this machine. The docs don't say the folder can hold nothing else, and Claude Code never uploads edits made there. (`<name>` here is a plain word in angle brackets, not a substitution.)
 - Symlinks are followed; the same target reachable twice loads once
+- Removed skills and plugins are kept in `~/.claude/skills/.trash` and
+  `~/.claude/plugins/.trash` (about 1024 entries each, regardless of `cleanupPeriodDays`,
+  v2.1.314) **[UNVERIFIED: whether anything in `.trash` is ever loaded]**
 - Plugin skills are namespaced (`/plugin-name:skill-name`) and never collide with
   standalone skills
 
 Budget: the listing costs ~1% of the context window, tunable via
 `skillListingBudgetFraction` or the `SLASH_COMMAND_TOOL_CHAR_BUDGET` env var. When over
 budget, descriptions are dropped starting with the **least-used** skills. `/doctor` shows
-listing cost; `/skill-doctor` (v2.1.252+) finds unused skills.
+listing cost; `/skill-doctor` (v2.1.252+) finds unused skills. After compaction Claude Code
+sends the skill listing again, and `/reload-skills` sends only new or changed skills
+(v2.1.304).
 
 ---
 

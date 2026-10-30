@@ -11,8 +11,9 @@ user-invocable: false
 # Agent Teams Reference
 
 Verified against code.claude.com/docs/en/agent-teams on 2026-10-15; re-audited 2026-10-30
-(blocked-task wording corrected; stamp not renewed) — 5 open claims, each
-marked **[UNCONFIRMED]** inline.
+(blocked-task wording corrected; changelog 2.1.302-2.1.314 reviewed; stamp not renewed) —
+6 open claims, each
+marked **[UNCONFIRMED]** or **[UNVERIFIED]** inline.
 
 ---
 
@@ -156,6 +157,10 @@ type." What carries over is partial:
 | Body | **Appended to** the default system prompt | **Replaces** the system prompt |
 | `skills` | **Ignored** — loads from project/user settings | **Ignored** |
 | `mcpServers` | **Ignored** | Applied |
+
+Split-pane teammates inherit the tool deny rules and `--tools` rules given on the leader's
+command line (v2.1.309 fix). **[UNVERIFIED: the changelog bullet does not mention in-process
+teammates.]**
 
 Model precedence: prompt, then the definition's `model`, then
 `CLAUDE_CODE_SUBAGENT_MODEL`, then the lead's model. (Before v2.1.251 the env var came
