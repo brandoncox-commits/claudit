@@ -104,7 +104,7 @@ For each rule, in this order:
 5. **Sensitive paths.** Missing `deny` protection on obvious secrets (`.env`, private keys,
    credential files) is a WARNING, not an ERROR — the user may protect them another way.
 6. **Mode traps.** An orchestrator configured with `dontAsk` cannot ask the user anything.
-   A child agent's `permissionMode` is overridden when the parent runs in `auto`,
+   A child agent's `permissionMode` is overridden when the parent runs in `plan`, `auto`,
    `acceptEdits` or `bypassPermissions`.
 
 Do not report a capability as wrong because you would not have granted it. Whether a

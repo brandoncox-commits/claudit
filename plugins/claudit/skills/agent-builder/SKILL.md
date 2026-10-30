@@ -13,7 +13,9 @@ user-invocable: false
 Patterns and standards for creating Claude Code subagents.
 
 Verified on 2026-10-15 against code.claude.com/docs/en/sub-agents, /permission-modes,
-/plugins-reference and /hooks — 4 open claims remain, each marked **[UNCONFIRMED]** inline.
+/plugins-reference and /hooks; re-audited 2026-10-30 (plan-mode inheritance, skills
+reachability and foreground/background corrected; stamp not renewed) — 8 open claims
+remain, each marked **[UNCONFIRMED]** inline.
 A few other claims rest on runtime probes rather than the docs; each says so where it
 appears.
 
@@ -44,15 +46,18 @@ the parent can **override the child's frontmatter entirely**:
 1. Parent in `bypassPermissions` → child **forced** to `bypassPermissions`
 2. Parent in `acceptEdits` → child **forced** to `acceptEdits`
 3. Parent in `auto` → child inherits `auto`; the child's `permissionMode` field is **ignored**
-4. Otherwise (parent in `default`, `dontAsk` or `plan`) → the child's own `permissionMode`
-   applies — **except `bypassPermissions`**: a child that declares it keeps the parent's
-   mode instead (v2.1.267+)
-5. Otherwise → child inherits the parent's mode
+4. Parent in `plan` → child **stays in `plan`** whichever `permissionMode` it sets (unless
+   it runs as an agent-team teammate); a child that sets `dontAsk` there gets actions that
+   plan mode would ask about denied, not prompted
+5. Parent in `default` or `dontAsk` → the child's own `permissionMode` applies —
+   **except** `bypassPermissions` (keeps the parent's mode, v2.1.267+) and `auto` when auto
+   mode is not available to the subagent
+6. `permissionMode` unset → child inherits the parent's mode
 
 **Consequence:** a child's `permissionMode` only takes effect when the parent session is
-in `default`, `dontAsk` or `plan`, and a child can never give itself `bypassPermissions`
+in `default` or `dontAsk`, and a child can never give itself `bypassPermissions`
 (v2.1.267+). Designs that pin specialists to specific modes must keep the orchestrator out
-of `bypassPermissions`, `acceptEdits` and `auto`. Plugin-shipped agents cannot set
+of `bypassPermissions`, `acceptEdits`, `auto` and `plan`. Plugin-shipped agents cannot set
 `permissionMode` at all.
 
 ### Mode reference
@@ -60,7 +65,7 @@ of `bypassPermissions`, `acceptEdits` and `auto`. Plugin-shipped agents cannot s
 | Mode | Behaviour |
 |---|---|
 | `default` (alias `manual`) | Asks before most actions **[UNCONFIRMED: whether an approval is remembered per tool]** |
-| `acceptEdits` | Auto-accepts file edits + common fs commands (`mkdir`, `touch`, `mv`, `cp`) in the working dir / `additionalDirectories` |
+| `acceptEdits` | Auto-accepts file edits + common fs commands (`mkdir`, `touch`, `rm`, `rmdir`, `mv`, `cp`, `sed`) in the working dir / `additionalDirectories` |
 | `plan` | Read-only exploration |
 | `auto` | Classifier auto-approves against the stated request |
 | `dontAsk` | Never prompts; **auto-DENIES** every call that would otherwise prompt. Reads, read-only Bash, `permissions.allow` matches and PreToolUse-hook approvals still run |
@@ -70,18 +75,18 @@ of `bypassPermissions`, `acceptEdits` and `auto`. Plugin-shipped agents cannot s
 marked `requiresUserInteraction`. An orchestrator in `dontAsk` cannot talk to the user.
 
 A subagent can never give itself `bypassPermissions`, whatever the settings: when the
-parent is in `default`, `dontAsk` or `plan`, a child that declares it keeps the parent's
+parent is in `default` or `dontAsk`, a child that declares it keeps the parent's
 mode instead (v2.1.267+). Separately, `permissions.disableBypassPermissionsMode: "disable"`
-(a string, not `true`) prevents `bypassPermissions` mode from being used at all. It works
-from any settings scope and is most useful in managed settings, where it can't be
-overridden.
+(a string, not `true`) prevents `bypassPermissions` mode from being used at all. It is
+most useful in managed settings, where it can't be overridden **[UNCONFIRMED: that it
+works from any settings scope — the docs only mention managed settings]**.
 `permissions.disableAutoMode` (write the nested form; set to `"disable"`) removes `auto`
 from the permission-mode cycle, forces the start mode to `default`, and stops
 `defaultMode: "auto"` taking effect.
 
 Subagents inherit the parent's **permission rules** **[UNCONFIRMED beyond auto mode — the
-docs state it explicitly only for auto mode: "the classifier evaluates the subagent's tool
-calls with the same block and allow rules as the parent session"]**.
+docs state it explicitly only for auto mode: "each of its actions goes through the same
+decision order as in the parent session, with the same block and allow rules"]**.
 Block specific agents with `permissions.deny: ["Agent(agent-name)"]`, or all spawning
 with `["Agent"]`.
 
@@ -109,17 +114,18 @@ Only `name` and `description` are required.
 | `name` | Required. kebab-case, no colons. Becomes `agent_type` in hooks. |
 | `description` | Required. How Claude decides to delegate. Combined descriptions over 15,000 tokens trigger a warning. |
 | `tools` | Allowlist. Inherits all subagent-available tools if omitted. Supports `Agent(type1, type2)` to restrict spawnable subagents (main-session agents only — see Nesting). |
-| `disallowedTools` | Denylist: "removed from inherited or specified list". Applied **before** `tools`: `disallowedTools` resolves first, then `tools` against the remaining pool; a tool named in both is removed. Supports `mcp__<server>` patterns. |
+| `disallowedTools` | Denylist: "removed from inherited or specified list". Applied **before** `tools`: `disallowedTools` resolves first, then `tools` against the remaining pool; a tool named in both is removed. Supports `mcp__<server>` patterns **[UNCONFIRMED: not re-checked against the live sub-agents page on 2026-10-30]**. |
 | `model` | `inherit` / `haiku` / `sonnet` / `opus` / `fable` / full ID (e.g. `claude-opus-5`). Omit to follow precedence. |
 | `permissionMode` | `default` / `manual` / `acceptEdits` / `auto` / `dontAsk` / `bypassPermissions` / `plan`. Subject to inheritance rules above. Not available to plugin agents. |
 | `omitClaudeMd` | `true` launches the subagent without the user, project and local CLAUDE.md files; managed policy files still load, except for managed subagents. For agents that take everything they need from the delegation prompt. Ignored when the agent runs as the main session agent. Requires v2.1.271+. |
 | `maxTurns` | Max agentic turns. Output marked partial; resumable via `SendMessage`. |
-| `skills` | Skill names preloaded in full at startup. Agents do NOT inherit the parent's skills. Cannot preload `disable-model-invocation: true` skills. |
+| `skills` | Skill names preloaded in full at startup. Controls what is preloaded, not what is reachable: the subagent can still invoke unlisted project, user and plugin skills through the Skill tool. Cannot preload `disable-model-invocation: true` skills. |
 | `mcpServers` | MCP servers scoped to this agent. Names or inline definitions. Not available to plugin agents. |
-| `hooks` | Lifecycle hooks scoped to this agent. **All hook events are supported** (a `Stop` hook here is auto-converted to `SubagentStop`). Only project-level subagents' hooks need workspace trust for the folder containing the agent file (v2.1.218+); user-level (`~/.claude/agents/`) and `--agents` definitions run without that step. Not available to plugin agents. |
+| `hooks` | Lifecycle hooks scoped to this agent. **All hook events are supported** (a `Stop` hook here is auto-converted to `SubagentStop`). Only project-level subagents' hooks need workspace trust for the folder containing the agent file (v2.1.218+ **[UNCONFIRMED: version]**); user-level (`~/.claude/agents/`) and `--agents` definitions run without that step. Not available to plugin agents. |
 | `memory` | `user` / `project` / `local`. Enables cross-session learning. |
 | `background` | `true` keeps the agent in background even when foreground is requested. |
 | `effort` | `low` / `medium` / `high` / `xhigh` / `max`. |
+| `autoCompactWindow` | Accepted range 100000-1000000 (v2.1.296+) **[UNCONFIRMED: exact semantics — not described in the audit]**. |
 | `isolation` | `worktree` runs in an isolated git worktree copy. |
 | `color` | Optional. `red` / `blue` / `green` / `yellow` / `purple` / `orange` / `pink` / `cyan`. There is no `magenta`. |
 | `initialPrompt` | Auto-submitted first turn when run as main session (`--agent`). |
@@ -159,8 +165,8 @@ the main conversation's exact tool pool.
 - `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`: `1` disables nesting, `3` is the default.
 - An agent at nesting level `d` below the main session (main = 0) receives the `Agent`
   tool only if `d < MAX_DEPTH`. At the limit the tool is **silently stripped** — there is
-  no "depth exceeded" error. *(Boundary behaviour confirmed by runtime probe on Claude
-  Code 2.1.266.)*
+  no "depth exceeded" error (a fork at the limit keeps the tool but the call errors).
+  *(Boundary behaviour confirmed by runtime probe on Claude Code 2.1.266.)*
   - Probe trap: an agent whose *only* tool is `Agent` is left with zero tools at the
     boundary, and the runtime refuses to spawn a zero-tool agent — so the failure appears
     one hop earlier than the real limit. Give probe agents a second, harmless tool.
@@ -324,20 +330,22 @@ Agent({ description: "Search for X", subagent_type: "Explore", model: "haiku",
 independently required is not established here — that lives in the tools reference, outside
 this file's sources. Every documented example supplies all three; do the same.
 
-**The Agent tool's `run_in_background` parameter exists only when fork mode is off.**
-Fork mode — the default in an interactive session — removes the parameter from the tool
-entirely, so Claude cannot ask for the foreground. It is available in `-p`/headless runs
-and in the Agent SDK unless fork mode is turned on. Backgrounding:
+**Foreground vs background.** With nothing configured, a subagent Claude spawns from the
+main conversation starts in the background. In `claude -p` and the Agent SDK, Claude can
+wait for a subagent on its own judgment or when asked. In interactive terminal, VS Code and
+desktop sessions fork mode is on by default (v2.1.302+; interactive terminal since
+v2.1.232) and Claude cannot wait; set `CLAUDE_CODE_FORK_SUBAGENT=0` to let it wait.
+**[UNCONFIRMED: whether the Agent tool still exposes a `run_in_background` parameter; the
+sub-agents page no longer mentions it.]**
 
-- Set `background: true` in the **agent's own frontmatter** to keep it in the background.
-- Otherwise Claude Code decides. With fork mode on — the default in an interactive
-  session — subagents run in the background. With fork mode off (`-p`/headless, and the
-  Agent SDK unless enabled), it runs them in the foreground when it needs the result.
-- `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` forces foreground everywhere.
-- Agent-team teammates: two more refusals, both scoped to an in-process teammate spawning
-  a subagent. Claude Code refuses with an error if the subagent's *definition* sets
-  `background: true`. With fork mode off and background tasks not disabled, it also refuses
-  with an error when the teammate's spawn call sets `run_in_background: true`.
+- Set `background: true` in the **agent's own frontmatter** to keep it in the background
+  even when Claude asks to wait.
+- `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` makes Claude wait for subagents to finish;
+  background commands are off too.
+- Agent-team teammates: a teammate's subagents run in the foreground. Claude Code returns
+  an error when a teammate spawns a subagent whose definition sets `background: true`; a
+  teammate's `run_in_background: true` request also fails, either with an error or by
+  running silently in the foreground (agent-teams, Limitations).
 
 **Resume via `SendMessage`**, not an `Agent({resume:...})` parameter:
 
@@ -358,7 +366,7 @@ Built-in Explore/Plan are one-shot and cannot resume.
 
 ## Hooks
 
-Frontmatter hooks are agent-scoped. Only project-level subagent hooks require workspace trust for the folder containing the agent file (v2.1.218+); hooks from user-level subagents in `~/.claude/agents/` and from definitions passed via `--agents` run without that step. **All hook events
+Frontmatter hooks are agent-scoped. Only project-level subagent hooks require workspace trust for the folder containing the agent file (v2.1.218+ **[UNCONFIRMED: version]**); hooks from user-level subagents in `~/.claude/agents/` and from definitions passed via `--agents` run without that step. **All hook events
 are supported**; the most common for subagents are `PreToolUse`, `PostToolUse`, and `Stop`
 (auto-converted to `SubagentStop`). Not available to plugin agents.
 

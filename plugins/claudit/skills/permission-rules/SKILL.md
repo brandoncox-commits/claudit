@@ -248,11 +248,12 @@ To give exactly one agent write access without widening the session:
 - keep the path out of the session-wide `allow` list, **and**
 - constrain the agent by its `tools` list instead.
 
-A child's `permissionMode` applies when the parent session is in `default`, `dontAsk`, or
-`plan`, **except** a child that declares `permissionMode: bypassPermissions`, which keeps
-the parent's mode instead (v2.1.267+). A parent in `auto`, `acceptEdits`, or
-`bypassPermissions` **overrides the child's frontmatter** entirely, which means an
-auto-mode session can make a broken allowlist look like it works.
+A child's `permissionMode` applies when the parent session is in `default` or `dontAsk`,
+**except** a child that declares `permissionMode: bypassPermissions` (v2.1.267+), or `auto`
+when auto mode isn't available, which keeps the parent's mode instead. A parent in `plan`
+(the subagent stays in plan mode unless it runs as an agent team teammate), `auto`,
+`acceptEdits`, or `bypassPermissions` **overrides the child's frontmatter** entirely, which
+means an auto-mode session can make a broken allowlist look like it works.
 
 ---
 

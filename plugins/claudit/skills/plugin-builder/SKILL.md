@@ -13,8 +13,10 @@ user-invocable: false
 Patterns and standards for creating and distributing Claude Code plugins.
 
 Verified on 2026-10-15 against code.claude.com/docs/en/plugins, /plugins-reference,
-/plugin-marketplaces, /discover-plugins and /sub-agents — 3 open claims, marked
-**[UNCONFIRMED]** inline.
+/plugin-marketplaces, /discover-plugins and /sub-agents; re-audited 2026-10-30 (the plugin
+docs were restructured, so many claims now live on /plugins/components, /plugins/loading,
+/plugins/cli-reference and /plugins/publish; stamp not renewed) — 3 open claims marked
+**[UNCONFIRMED]** and 7 marked **[UNVERIFIED]** inline.
 
 ---
 
@@ -77,7 +79,7 @@ Common fields:
   "name": "my-plugin",              // Required. Skill namespace prefix. kebab-case.
   "displayName": "My Plugin",       // Human-readable name for UI.
   "description": "...",             // Shown in plugin manager.
-  "version": "1.0.0",               // Semver. Pins the version — see Versioning below.
+  "version": "1.0.0",               // Version string (not checked against semver). Pins the version — see Versioning below.
   "author": { "name": "Your Name", "email": "you@example.com" },
   "homepage": "https://...",
   "repository": "https://github.com/your/repo",
@@ -97,7 +99,7 @@ Arguments work the same: `/my-plugin:greet Alex` → `$ARGUMENTS = "Alex"`.
 
 Inside plugin skill content, `<dollar>{CLAUDE_PLUGIN_ROOT}` (install directory) and
 `<dollar>{CLAUDE_PLUGIN_DATA}` (persistent data directory that survives updates) are substituted,
-as is `<dollar>{CLAUDE_SKILL_DIR}` (the skill's own subdirectory). In this file `<dollar>` stands for a literal `$`, written that way so this skill's own text is not rewritten when it loads. When you write config for a user, type a real `$`; copying `<dollar>` verbatim produces a server that fails to start.
+as is `<dollar>{CLAUDE_SKILL_DIR}` (the skill's own subdirectory) **[UNVERIFIED: the plugin pages list only `CLAUDE_PLUGIN_ROOT`, `CLAUDE_PLUGIN_DATA` and `CLAUDE_PROJECT_DIR`; this one belongs to the skills page]**. In this file `<dollar>` stands for a literal `$`, written that way so this skill's own text is not rewritten when it loads. When you write config for a user, type a real `$`; copying `<dollar>` verbatim produces a server that fails to start.
 
 ---
 
@@ -143,7 +145,7 @@ Create `hooks/hooks.json` at plugin root (same format as settings.json hooks):
 ```
 
 Hook commands receive JSON via stdin. Exit code 2 blocks the action; stderr becomes
-Claude's feedback. A plugin hook runs shell commands on the user's machine — it is the
+Claude's feedback **[UNVERIFIED: hooks-page content, not on the plugin pages]**. A plugin hook runs shell commands on the user's machine — it is the
 highest-trust component a plugin can ship.
 
 ---
@@ -166,7 +168,7 @@ In `.mcp.json` at plugin root:
 ```
 
 Supported transports: `stdio`, `http`, `ws`, `sse` (deprecated — use `http` instead
-where available).
+where available) **[UNVERIFIED: the plugin pages only point to the MCP page]**.
 
 ---
 
@@ -191,17 +193,18 @@ when that is the plugin's whole purpose.
 ```
 
 Users must have the language server binary installed. Prefer the official marketplace LSP
-plugins (typescript-lsp, pyright-lsp, gopls-lsp, rust-analyzer-lsp, etc.).
+plugins (typescript-lsp, pyright-lsp, gopls-lsp, rust-analyzer-lsp, etc.) **[UNVERIFIED:
+the docs say only "the language server plugins", not these names]**.
 
 ---
 
 ## Testing a Plugin Locally
 ```bash
-claude plugin validate ./my-plugin          # same check the community review runs
+claude plugin validate ./my-plugin          # [UNVERIFIED: "same check the community review runs"; docs say the directory portal applies extra rules the CLI does not check]
 claude --plugin-dir ./my-plugin             # load without installing, for one session
 claude --plugin-dir ./plugin-one --plugin-dir ./plugin-two  # load several at once
 claude --plugin-dir ./plugins               # folder of plugins: loads every subfolder
-                                             # with a manifest. Requires v2.1.265+
+                                             # with a manifest. Requires v2.1.265+ [UNVERIFIED: version]
 claude --plugin-url https://…/my-plugin.zip # zip archive hosted at a URL; repeat the
                                              # flag to load more than one
 claude plugin init my-tool                  # scaffold a skills-directory plugin
@@ -267,10 +270,10 @@ the **Installed** tab at that plugin and make the change there. **[UNCONFIRMED]*
 closes it: neither is stated in the docs. `/plugin validate` prints its report inline, and
 `/plugin marketplace add <source>` reports its result and `/plugin marketplace list` prints
 inline; `/plugin marketplace update` and `/plugin marketplace remove` open the
-**Marketplaces** tab. Settings that exist only in the panel — enabling auto-update for a
-marketplace, for instance — have no documented CLI equivalent; the panel is the per-user
-way to change them (administrators can instead set `"autoUpdate": true` on an
-`extraKnownMarketplaces` entry in managed settings).
+**Marketplaces** tab. Enabling auto-update for a marketplace has no dedicated CLI command.
+The panel toggle is one way to set it; `autoUpdate` on an `extraKnownMarketplaces` entry in
+a settings file is another and takes precedence over the toggle (administrators can set
+`"autoUpdate": true` there in managed settings).
 
 Install scopes: **User** (all your projects), **Project** (all collaborators — writes
 `.claude/settings.json`), **Local** (you, this repo only).
@@ -286,9 +289,11 @@ Synced plugins have IDs of the form `<name>@synced`, and no marketplace can be n
 - **Auto-update:** `claude-plugins-official` and most other official Anthropic marketplaces
   have it enabled by default; third-party and local marketplaces have it disabled by
   default. Toggle it per marketplace via `/plugin` → Marketplaces → *Enable/Disable
-  auto-update*. **[UNCONFIRMED]** Whether `/plugin marketplace update` — a one-off
-  catalogue refresh — leaves this setting untouched: the docs describe the two as separate
-  mechanisms but never state that refreshing doesn't change the toggle.
+  auto-update*. **[UNCONFIRMED]** Whether `/plugin marketplace update` leaves this setting
+  untouched: the docs describe the two as separate mechanisms but never state that
+  refreshing doesn't change the toggle. Note the Marketplaces tab's *Update marketplace*
+  also updates the plugins installed from that marketplace, while the shell
+  `claude plugin marketplace update` with no name leaves plugins alone.
 - Updates are checked in the background after session start; the running session keeps the
   version it loaded and is told to `/reload-plugins`.
 - Rename or retire a plugin with the marketplace `renames` map (`"old": "new"` or
@@ -330,7 +335,8 @@ claude --plugin-dir ./my-plugin
 After migrating and confirming the plugin works, delete the originals from `.claude/`.
 Skills and agents do not collide while both exist — plugin skills and agents carry the
 `my-plugin:` prefix, so `reviewer` and `my-plugin:reviewer` are two subagents — but hooks
-have no prefix, so a hook left in both `settings.json` and `hooks/hooks.json` runs twice.
+have no prefix, so a hook left in both `settings.json` and `hooks/hooks.json` runs twice
+**[UNVERIFIED: the docs do not address this cross-source case]**.
 
 ---
 
