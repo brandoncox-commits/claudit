@@ -10,7 +10,8 @@ user-invocable: false
 
 # Agent Teams Reference
 
-Verified against code.claude.com/docs/en/agent-teams on 2026-10-15 — 3 open claims, each
+Verified against code.claude.com/docs/en/agent-teams on 2026-10-15; re-audited 2026-10-30
+(blocked-task wording corrected; stamp not renewed) — 5 open claims, each
 marked **[UNCONFIRMED]** inline.
 
 ---
@@ -26,7 +27,8 @@ spawn or propose teammates.
 
 `TeamCreate` and `TeamDelete` **no longer exist** (removed in v2.1.178). Teams are
 created implicitly at session start; cleanup is automatic on exit. The `team_name`
-input on the Agent tool is accepted but ignored.
+input on the Agent tool is accepted but ignored. **[UNCONFIRMED — not on the current page
+or the old snapshot]**
 
 ---
 
@@ -81,7 +83,7 @@ Set `teammateMode` in `~/.claude/settings.json`, or `claude --teammate-mode <mod
 | `in-process` | **Default.** All teammates in one terminal, agent panel below the prompt. Works anywhere. |
 | `auto` | Split panes when already inside tmux, or iTerm2 with `it2`; otherwise in-process. |
 | `tmux` | Split panes, auto-detecting tmux vs iTerm2. |
-| `iterm2` | iTerm2 native panes (v2.1.186+). Requires the `it2` CLI. |
+| `iterm2` | iTerm2 native panes (v2.1.186+ **[UNCONFIRMED: version]**). Requires the `it2` CLI. |
 
 Default was `auto` before v2.1.179 **[UNCONFIRMED — not on the current page]**. `teammateDefaultModel` was removed in v2.1.234.
 
@@ -118,9 +120,10 @@ There is no project-level team config. `.claude/teams/teams.json` is just an ord
 Tools available in sessions that have the Task tools: `TaskCreate`, `TaskGet`,
 `TaskList`, `TaskUpdate`. Agents without them coordinate purely by messages.
 
-States: pending, in progress, completed. Tasks may declare dependencies; a pending task
-with unresolved dependencies cannot be claimed. Completing a task auto-unblocks its
-dependents. Claiming uses file locking to prevent races.
+States: pending, in progress, completed. Tasks may declare dependencies and show as blocked
+until those are completed; teammates do not self-claim a blocked task, but the user or lead
+can still assign it. Completing a task auto-unblocks its dependents. Claiming uses file
+locking to prevent races.
 
 Lead assigns explicitly, or a teammate self-claims the next unassigned unblocked task.
 

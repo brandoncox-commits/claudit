@@ -12,8 +12,9 @@ user-invocable: false
 
 Patterns for creating Claude Code hooks that react to tool calls and session events.
 
-Verified against code.claude.com/docs/en/hooks and /docs/en/hooks-guide on 2026-10-15 —
-0 open claims. A few details rest on a runtime probe of `PostToolUse` stdin; each says so
+Verified against code.claude.com/docs/en/hooks and /docs/en/hooks-guide on 2026-10-15;
+re-audited 2026-10-30 (`prompt` hook `impossible` field added; stamp not renewed) —
+2 open claims, each marked **[UNVERIFIED]** inline. A few details rest on a runtime probe of `PostToolUse` stdin; each says so
 where it appears.
 
 Audit note: the full `/docs/en/hooks` page is long and web fetches of it can truncate
@@ -61,7 +62,7 @@ worktree/elicitation events.
 Scoping: hooks in `settings.json` are session-wide and **do see subagents**. Hooks in
 agent frontmatter are scoped to that agent and **support all hook events** (a `Stop` hook
 there is auto-converted to `SubagentStop`). **Only project-level subagent frontmatter
-hooks require the containing folder to be trusted (v2.1.218+)** — hooks from user-level
+hooks require the containing folder to be trusted (v2.1.218+ **[UNVERIFIED: version]**)** — hooks from user-level
 subagents in `~/.claude/agents/` and from definitions passed via `--agents` run without
 that step. **Plugin-shipped agents cannot declare frontmatter `hooks` at all** — but a
 plain agent `.md` file copied into `.claude/agents/` can, which is why downloaded agent
@@ -79,7 +80,8 @@ files must be checked for this field.
 | `prompt` | **Single-turn LLM evaluation.** Sends your `prompt` text plus the hook input to a Claude model (Haiku by default; override with `model`), which returns a JSON decision | Judgment calls a regex can't make, e.g. a `Stop` hook checking whether all tasks are done |
 | `agent` | **Multi-turn verification with tool access.** Experimental and may change | Verification that needs to read files or run checks |
 
-A `prompt` hook has no `command` field and returns only an `ok` / `reason` decision. It
+A `prompt` hook has no `command` field and returns a JSON decision: `ok`, `reason`
+(required when `ok` is `false`) and an optional `impossible`. It
 cannot add `additionalContext`; its `reason` reaches Claude only when it blocks on an event
 that feeds the reason back (e.g. `Stop`). To add context for Claude, use a `command` hook
 whose output carries `hookSpecificOutput.additionalContext` (see below).
@@ -284,7 +286,9 @@ hooks:
 Unlike agent-frontmatter hooks, which are removed when that subagent finishes, skill
 hooks stay registered for the rest of the session once invoked — including turns after
 the skill's own turn. Add `once: true` on a hook to remove it after its first successful
-run.
+run. From v2.1.304 each skill source has its own per-session limit on skill hooks: at most
+1,024 hooks and 16,384 matcher characters **[UNVERIFIED: figures come from a fetch summary;
+the "Limits on skill hooks" subsection was not read in full]**.
 
 ### Plugin `hooks/hooks.json` (in the plugin root, or inline in `plugin.json`)
 

@@ -90,7 +90,7 @@ convention, respect it.
    they do nothing (`WARNING`: the author probably believes they work).
 3. **Mode traps**: an agent meant to talk to the user or orchestrate, set to `dontAsk`
    (it cannot ask anything) — `ERROR`. A design relying on a child's `permissionMode` when
-   the user runs `auto`, `acceptEdits` or `bypassPermissions` (the parent's mode wins) —
+   the user runs `auto`, `acceptEdits`, `bypassPermissions` or `plan` (the parent's mode wins) —
    `WARNING`.
 4. **Stripped tools**: an agent whose instructions depend on `AskUserQuestion`,
    `EnterPlanMode` etc., which are removed from every subagent — `ERROR`.

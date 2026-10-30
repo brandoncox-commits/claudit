@@ -62,14 +62,18 @@ three fields at all. So:
 
 - A **loose** agent file declaring a `PreToolUse` hook runs a command on every matching
   tool call; declaring `mcpServers` adds a server; declaring `permissionMode: acceptEdits`
-  or `auto` changes prompting when the parent is in `default`, `dontAsk` or `plan`.
+  or `auto` changes prompting when the parent is in `default` or `dontAsk` (if the parent is
+  in `plan`, `acceptEdits`, `bypassPermissions` or auto mode, the subagent keeps the
+  parent's mode and the field is ignored).
   `permissionMode: bypassPermissions` is ignored from Claude Code v2.1.267 (the subagent
   keeps the parent's mode) but skips prompts on earlier versions, so still flag it. These
   are live.
 - The same fields in a **plugin's** `agents/` files are inert. Note them, do not escalate
   them. The plugin's live surfaces are `hooks/hooks.json`, `.mcp.json`, `.lsp.json`
   (starts a language-server process), `bin/`, `monitors/`, and any `settings.json` `agent`
-  key (which replaces the main thread's system prompt while the plugin is enabled).
+  key (which replaces the main thread's system prompt while the plugin is enabled). The
+  live docs also allow inline `hooks`, `mcpServers` and `lspServers` in `plugin.json`, and
+  `themes`, `outputStyles` and `workflows`: scan these too.
 
 ## What to scan
 

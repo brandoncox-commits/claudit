@@ -4,6 +4,28 @@ All notable changes to Claudit. Versions follow [semantic versioning](https://se
 Guidance changes (a reference skill corrected against the live docs) are listed under
 **Guidance**, with the doc page that changed.
 
+## [0.2.4] — 2026-10-30
+
+Guidance corrections against the live documentation, plus a re-baseline of all 16 doc-watch
+snapshots on 2026-10-30. Doc-drift issues #43-#50 and #53-#60 are addressed by this release.
+
+### Guidance
+- permission-rules, agent-builder, troubleshooting and the claudit-agents-reviewer,
+  claudit-permissions-reviewer and claudit-supply-chain-reviewer agents: corrected how a
+  subagent's permissionMode is inherited when the parent session is in plan mode.
+- agent-builder: corrected the foreground/background behaviour and which skills a subagent can
+  reach.
+- skill-builder: corrected the angle-bracket and effort guidance.
+- agent-teams: corrected the wording about blocked tasks.
+- hooks-builder: corrected the prompt-hook "impossible" field.
+- plugin-builder: corrected the version and auto-update guidance and added 7 [UNVERIFIED]
+  markers where the docs do not confirm a claim.
+- output-style-builder: added a caveat about keep-coding-instructions.
+
+### Repository
+- Doc-watch snapshots re-baselined 2026-10-30 for all 16 pages; every page reports no
+  differences from its snapshot.
+
 ## [0.2.3] — 2026-10-16
 
 Repository tooling release with no change to Claudit's skills or agents. The skills and mcp

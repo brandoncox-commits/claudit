@@ -12,7 +12,8 @@ user-invocable: false
 
 Patterns and standards for creating Claude Code skills (Agent Skills open standard).
 
-Verified against code.claude.com/docs/en/skills on 2026-10-15 — 8 open claims, each
+Verified against code.claude.com/docs/en/skills on 2026-10-15; re-audited 2026-10-30
+(angle-bracket handling and `effort` corrected; stamp not renewed) — 10 open claims, each
 marked **[UNCONFIRMED]** or **[UNVERIFIED]** inline. Items marked *Convention* are good
 practice, not requirements — report gaps against them as suggestions, never as errors.
 
@@ -73,13 +74,13 @@ description: >-         # the trigger. Combined description + when_to_use capped
 | `allowed-tools` | No | Tools Claude can use without prompting while the skill is active. Space/comma string or YAML list. |
 | `disallowed-tools` | No | Tools removed from the pool while the skill is active. Clears on next message. |
 | `model` | No | Same values as `/model`, or `inherit`. Applies for the rest of the current turn only. |
-| `effort` | No | `low` / `medium` / `high` / `xhigh` / `max` (depends on model). Overrides session effort. |
+| `effort` | No | `low` / `medium` / `high` / `xhigh` / `max` (depends on model). Applies for the current turn; does not override `CLAUDE_CODE_EFFORT_LEVEL`. |
 | `context` | No | `fork` = run in a forked subagent. |
 | `agent` | No | Subagent type for `context: fork`: `Explore`, `Plan`, `general-purpose`, or custom. Defaults to `general-purpose`. |
 | `paths` | No | Glob patterns limiting when the skill auto-activates. |
 | `arguments` | No | Named positional args for `$name` substitution. |
 | `shell` | No | Shell for dynamic-injection commands: `bash` (default) or `powershell`. |
-| `background` | No | With `context: fork`, `false` waits for the result in the invoking turn. Default `true`. Requires v2.1.218+. |
+| `background` | No | With `context: fork`, `false` waits for the result in the invoking turn. Default `true`. Requires v2.1.218+ **[UNVERIFIED: version rests on the old snapshot only]**. |
 | `hooks` | No | Hooks that Claude Code registers when the skill is invoked and keeps running for the rest of the session (`once: true` removes a hook after its first successful run). |
 | `argument-hint` | No | Shown in autocomplete: `[issue-number]` or `[file] [format]`. |
 | `license` / `compatibility` / `metadata` | No | Open-standard (agentskills.io) fields. |
@@ -99,7 +100,7 @@ frontmatter key; Claude Code ignores it, so it has no effect", never as an ERROR
 skill is or will be published to claude.ai or the Skills API, the same key **is** a
 documented hard failure: raise that at real severity and cite the six-field spec.
 
-Avoid angle brackets (`<` `>`) in `description`: Claude Code escapes them in the description text that reaches Claude so the text can't imitate its internal formatting (requires v2.1.228+). The docs describe this for skills synced from claude.ai; handling in a local skill's frontmatter is not documented.
+Avoid angle brackets (`<` `>`) in `description` and `when_to_use`: Claude Code displays them as `&lt;` and `&gt;`. Use square brackets, or move a placeholder to `argument-hint`. Claude Code also escapes them in text that reaches Claude so it can't imitate internal formatting (requires v2.1.228+).
 
 For skills uploaded to claude.ai or the Skills API, `name` may not contain the reserved words `claude` or `anthropic` **[UNCONFIRMED — not on the Claude Code skills page]**.
 
@@ -185,7 +186,7 @@ If no placeholder receives the arguments, they are appended as `ARGUMENTS: <inpu
 | `$ARGUMENTS[N]` / `$N` | Argument by 0-based index |
 | `$name` | Named argument declared in `arguments:` frontmatter |
 | `<dollar>{CLAUDE_SKILL_DIR}` | Directory containing this SKILL.md (for plugin skills, the skill's own subdirectory) |
-| `<dollar>{CLAUDE_PROJECT_DIR}` | Project root (substitution requires v2.1.196+) |
+| `<dollar>{CLAUDE_PROJECT_DIR}` | Project root (substitution requires v2.1.196+ **[UNVERIFIED: version not on the live page]**) |
 | `<dollar>{CLAUDE_SESSION_ID}` | Current session ID |
 | `<dollar>{CLAUDE_EFFORT}` | Current effort level |
 | `<dollar>{CLAUDE_PLUGIN_ROOT}` / `<dollar>{CLAUDE_PLUGIN_DATA}` | Plugin skills only |

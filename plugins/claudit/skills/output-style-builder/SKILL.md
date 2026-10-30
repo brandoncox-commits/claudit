@@ -76,6 +76,8 @@ verify work — unless it is set to `true`.
 - Set `true` when changing how Claude communicates but it is still coding.
 - Leave it out when Claude is not doing software engineering at all (writing assistant,
   data analyst).
+- The field only has effect on the full system prompt. The shorter system prompt doesn't
+  include that section; to rely on the field, set `CLAUDE_CODE_SIMPLE_SYSTEM_PROMPT` to `0`.
 
 ---
 

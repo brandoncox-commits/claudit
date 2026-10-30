@@ -99,7 +99,7 @@ commands under Diagnostic Commands were verified against /setup on 2026-10-15.
 | Symptom | Likely Cause | Fix |
 |---------|-------------|-----|
 | Tool call denied unexpectedly | Mode too strict, or a rule that never matches | Check `permissions.defaultMode` in settings, or `permissionMode` in agent frontmatter; then check the rule's exact matching form (see the permission-rules reference) |
-| Agent's `permissionMode` seems ignored | The parent's mode wins | If the parent session runs in `bypassPermissions`, `acceptEdits` or `auto`, that mode is forced on subagents. A child's `permissionMode` applies when the parent is in `default`, `dontAsk` or `plan`, except `bypassPermissions`, which a child can't give itself (v2.1.267+). Plugin agents cannot set `permissionMode` at all |
+| Agent's `permissionMode` seems ignored | The parent's mode wins | If the parent session runs in `bypassPermissions`, `acceptEdits` or `auto`, that mode is forced on subagents. If the parent is in `plan`, subagents stay in plan mode whichever `permissionMode` they set (unless they run as agent team teammates). A child's `permissionMode` applies only when the parent is in `default` or `dontAsk`, except that a child setting `bypassPermissions` (v2.1.267+) or `auto` (when auto mode isn't available) keeps the parent's mode. Plugin agents cannot set `permissionMode` at all |
 | `dontAsk` agent can't ask anything | Working as designed | `dontAsk` denies everything not pre-approved, including `AskUserQuestion` — never run an orchestrator in it |
 | Hook blocks valid action | Overly broad matcher | Narrow matcher; add condition checking before `exit 2` |
 | OAuth loop on MCP | Stale token | `claude mcp logout server-name` then `claude mcp login server-name` |
