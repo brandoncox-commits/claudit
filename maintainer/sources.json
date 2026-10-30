@@ -1,7 +1,7 @@
 {
   "schema": 2,
   "normaliser_version": 2,
-  "_comment": "Maps each canonical doc page to the Claudit files that depend on it. sha256 is the hash of the page's normalised markdown as of the last time the dependent files were verified against it; doc_watch.py opens a doc-drift issue when the live page no longer matches. Update a page's sha256 and verified date in the same release PR that re-verifies its dependents. A dependent file may still carry open claims, provided each is marked inline ([UNCONFIRMED] / [UNVERIFIED]); an unmarked unverified claim blocks the update. BASELINE NOTE: all 16 hashed pages were re-verified claim by claim and re-baselined on 2026-10-15, except the skills and mcp pages, which were re-baselined on 2026-10-16 (each page's verified field is authoritative) (high-bar pass: 12 of 16 dependent files confirmed still correct, 4 edited; hashes were taken once, after the audit and edits, so page stability during the audit was not separately measured). Previous baseline 2026-09-25. /setup covers only the update commands that skills/troubleshooting cites from it. Two more pages were added 2026-09-22 as rubric sources not yet backing any shipped file (platform.claude.com's Agent Skills best-practices page and code.claude.com's agent-sdk/subagents page). Both start sha256: null / verified: null and covers: [] until they underpin an actual plugins/claudit/ file.",
+  "_comment": "Maps each canonical doc page to the Claudit files that depend on it. sha256 is the hash of the page's normalised markdown as of the last time the dependent files were verified against it; doc_watch.py opens a doc-drift issue when the live page no longer matches. Update a page's sha256 and verified date in the same release PR that re-verifies its dependents. A dependent file may still carry open claims, provided each is marked inline ([UNCONFIRMED] / [UNVERIFIED]); an unmarked unverified claim blocks the update. BASELINE NOTE: all 20 hashed pages carry verified 2026-10-30, the date their hashes were last re-baselined (earlier baselines: 2026-10-15/16 and 2026-09-25). The dependent files' own Verified stamps were NOT renewed on 2026-10-30; they keep their 2026-10-15 stamps and list their open claims inline. Earlier note (high-bar pass: 12 of 16 dependent files confirmed still correct, 4 edited; hashes were taken once, after the audit and edits, so page stability during the audit was not separately measured). Previous baseline 2026-09-25. /setup covers only the update commands that skills/troubleshooting cites from it. Two more pages were added 2026-09-22 as rubric sources not yet backing any shipped file (platform.claude.com's Agent Skills best-practices page and code.claude.com's agent-sdk/subagents page). Both start sha256: null / verified: null and covers: [] until they underpin an actual plugins/claudit/ file. Four more pages (plugins/components, plugins/loading, plugins/publish and settings-reference) were added and baselined on 2026-10-30, taking the hashed total to 20; dependents that were modified were re-audited the same day, with open claims marked inline and stamps not renewed.",
   "pages": {
     "https://code.claude.com/docs/en/sub-agents.md": {
       "sha256": "42fe881affc045c1956da395e4474e92c4cd7880e612d2620e5365ebccf91537",
@@ -83,6 +83,26 @@
       "verified": "2026-10-30",
       "covers": ["skills/troubleshooting"]
     },
+    "https://code.claude.com/docs/en/plugins/components.md": {
+      "sha256": "4e824b70bbe00db2d487ab5aeac1c63575fdc151b0d0a3eff573f461ce6f6d4b",
+      "verified": "2026-10-30",
+      "covers": ["skills/plugin-builder", "skills/hooks-builder", "skills/mcp-config", "skills/output-style-builder"]
+    },
+    "https://code.claude.com/docs/en/plugins/loading.md": {
+      "sha256": "ce8883bdc09392aeac539308e2df785618968efcadadec0d9d21950ab93921eb",
+      "verified": "2026-10-30",
+      "covers": ["skills/plugin-builder", "skills/troubleshooting", "skills/about"]
+    },
+    "https://code.claude.com/docs/en/plugins/publish.md": {
+      "sha256": "7325688e5ae4cca5e775f499c1f813e8667d041d3c3121eb15e6f085c1d4bb67",
+      "verified": "2026-10-30",
+      "covers": ["skills/plugin-builder"]
+    },
+    "https://code.claude.com/docs/en/settings-reference.md": {
+      "sha256": "1d3cbe4cc7f66d72ebaf6b13f1c5d718adc157a641cdf9db0262f91c1af6d16c",
+      "verified": "2026-10-30",
+      "covers": ["skills/permission-rules", "skills/agent-builder", "agents/claudit-config-reviewer", "skills/audit", "skills/troubleshooting"]
+    },
     "https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices.md": {
       "sha256": null,
       "verified": null,
@@ -96,6 +116,6 @@
   },
   "changelog": {
     "url": "https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md",
-    "last_reviewed_version": "2.1.301"
+    "last_reviewed_version": "2.1.314"
   }
 }

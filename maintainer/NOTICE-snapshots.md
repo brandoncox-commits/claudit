@@ -1,6 +1,6 @@
 # Notice: documentation snapshots
 
-The files in `maintainer/snapshots/` are verbatim, whitespace-normalised copies of pages from
+The files in `maintainer/snapshots/` are verbatim, whitespace-normalised copies (each prefixed with one added claudit header line) of pages from
 Anthropic's Claude Code documentation. The exact source URL of each copy is in the header
 line of its file.
 

@@ -15,7 +15,7 @@ Patterns and standards for creating and distributing Claude Code plugins.
 Verified on 2026-10-15 against code.claude.com/docs/en/plugins, /plugins-reference,
 /plugin-marketplaces, /discover-plugins and /sub-agents; re-audited 2026-10-30 (the plugin
 docs were restructured, so many claims now live on /plugins/components, /plugins/loading,
-/plugins/cli-reference and /plugins/publish; stamp not renewed) — 3 open claims marked
+/plugins/cli-reference and /plugins/publish; stamp not renewed) — 2 open claims marked
 **[UNCONFIRMED]** and 7 marked **[UNVERIFIED]** inline.
 
 ---
@@ -45,7 +45,7 @@ my-plugin/
 ├── output-styles/          ← Output style definitions
 ├── workflows/              ← Workflow script files
 ├── themes/                 ← Color theme definitions
-├── monitors/monitors.json  ← Background monitors (experimental)
+├── monitors/monitors.json  ← Background monitors (experimental; the Monitor tool and plugin monitors are available on Bedrock, Vertex, Foundry and with telemetry off since v2.1.310)
 ├── hooks/hooks.json        ← Hook configuration
 ├── bin/                    ← Executables added to the Bash tool's PATH while enabled
 ├── settings.json           ← Default settings (only `agent` and `subagentStatusLine`)

@@ -4,6 +4,23 @@ All notable changes to Claudit. Versions follow [semantic versioning](https://se
 Guidance changes (a reference skill corrected against the live docs) are listed under
 **Guidance**, with the doc page that changed.
 
+## [0.2.5] — 2026-10-30
+
+Guidance corrections after reviewing the skills against the Claude Code changelog
+2.1.302-2.1.314, plus wider doc-watch coverage and new maintainer tooling.
+
+### Guidance
+- hooks-builder, permission-rules, agent-builder, skill-builder, agent-teams, plugin-builder
+  and troubleshooting: updated against Claude Code changelog 2.1.302-2.1.314. New claims taken
+  from the changelog are marked [UNVERIFIED] where the docs do not yet confirm them.
+  Verification stamps were not renewed.
+
+### Repository
+- Doc-watch now also watches the plugins/components, plugins/loading and plugins/publish pages
+  and the settings reference, with snapshots (NOTICE updated).
+- New maintainer tooling: replay_doc_watch.py (a read-only replay of the watcher's classifier)
+  with tests, and a maintainer-only project skill, claudit-issues.
+
 ## [0.2.4] — 2026-10-30
 
 Guidance corrections against the live documentation, plus a re-baseline of all 16 doc-watch

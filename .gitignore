@@ -8,3 +8,7 @@ Thumbs.db
 # Scratch file holding release notes for `gh release create --notes-file`.
 # Written transiently during a ship; must never be committed.
 .release-notes.md
+
+# Local-only Claude Code settings and memory; never commit.
+.claude/settings.local.json
+.claude/agent-memory-local/

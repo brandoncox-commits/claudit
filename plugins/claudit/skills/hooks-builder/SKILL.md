@@ -13,8 +13,8 @@ user-invocable: false
 Patterns for creating Claude Code hooks that react to tool calls and session events.
 
 Verified against code.claude.com/docs/en/hooks and /docs/en/hooks-guide on 2026-10-15;
-re-audited 2026-10-30 (`prompt` hook `impossible` field added; stamp not renewed) —
-2 open claims, each marked **[UNVERIFIED]** inline. A few details rest on a runtime probe of `PostToolUse` stdin; each says so
+re-audited 2026-10-30 (`prompt` hook `impossible` field added; changelog 2.1.302-2.1.314
+reviewed; stamp not renewed) — 4 open claims, each marked **[UNVERIFIED]** inline. A few details rest on a runtime probe of `PostToolUse` stdin; each says so
 where it appears.
 
 Audit note: the full `/docs/en/hooks` page is long and web fetches of it can truncate
@@ -92,6 +92,12 @@ Default timeouts: `command`, `http`, `mcp_tool` 10 minutes (lowered to 30 second
 type share a single 1.5-second budget instead**, raised to match a longer per-hook
 `timeout` up to 60 seconds. Override per hook with `timeout` (seconds).
 
+`prompt` and `agent` hooks are also capped in concurrency. Since v2.1.312 at most 24 run at a
+time per session, subagents included, plus at most 12 that have waited longer than their
+event's `timeout`; a `timeout` under 1 second counts as 1 second. v2.1.302 had capped it at
+12 of one event at a time **[UNVERIFIED: whether that per-event cap still applies alongside
+the 24, and what happens to a hook waiting beyond its timeout; settle on /docs/en/hooks]**.
+
 Only `command` hooks support asynchronous execution (via `async` / `asyncRewake`) —
 `http` and `mcp_tool` hooks have no async variant and always block.
 
@@ -116,6 +122,13 @@ plain text only: JSON `additionalContext` is a separate channel (below), and a `
 or `PostToolUse` hook that uses it correctly does reach Claude.
 
 A gate that can't run fails open. A missing or non-executable script (shell exit 127), a crash, or a timeout is a non-blocking error and the tool call goes ahead, so a mistyped path leaves a policy hook silently disabled. After installing a blocking hook, trigger it once on purpose and confirm the block happens.
+
+On Windows, a hook that sets `"shell": "powershell"` and whose program exits 2 did not block
+before v2.1.309, and `PreToolUse` and `PermissionRequest` hooks with that shell failed open
+when Git for Windows was not installed (both fixed in v2.1.309). A related fail-open for hooks
+whose command is only quoted strings, such as a quoted path, when Git Bash is missing was fixed
+in v2.1.310. **[UNVERIFIED: the `shell` hook field and its allowed values; the changelog shows
+only `"shell": "powershell"`. Settle on /docs/en/hooks.]**
 
 ### Adding context for Claude
 
@@ -146,7 +159,8 @@ result" (https://code.claude.com/docs/en/agent-sdk/hooks). On `PreToolUse`, "Tex
 limit, Claude Code saves the output to a file in the session directory and passes a
 preview of up to the first 2,000 characters plus the path; "this cap has no setting or
 environment variable to raise it", and "Claude Code doesn't ask Claude to read the file".
-Keep anything Claude must always see under the cap.
+Keep anything Claude must always see under the cap. A `PreCompact` hook's output is also
+cut at 10,000 characters (v2.1.314).
 
 `PostToolUse` and `Stop` hooks block with a top-level `decision: "block"`;
 `PermissionRequest` uses `hookSpecificOutput.decision.behavior`. Check the reference's
@@ -286,9 +300,9 @@ hooks:
 Unlike agent-frontmatter hooks, which are removed when that subagent finishes, skill
 hooks stay registered for the rest of the session once invoked — including turns after
 the skill's own turn. Add `once: true` on a hook to remove it after its first successful
-run. From v2.1.304 each skill source has its own per-session limit on skill hooks: at most
-1,024 hooks and 16,384 matcher characters **[UNVERIFIED: figures come from a fetch summary;
-the "Limits on skill hooks" subsection was not read in full]**.
+run. From v2.1.304 the skills of one source (a repo, your own folder, or a plugin) can
+register at most 1,024 hooks and 16,384 matcher characters per session (stated in the
+v2.1.304 release notes).
 
 ### Plugin `hooks/hooks.json` (in the plugin root, or inline in `plugin.json`)
 
@@ -312,6 +326,18 @@ the "Limits on skill hooks" subsection was not read in full]**.
 
 To disable all hooks, set `"disableAllHooks": true`. Hooks in managed settings still run
 unless it is also set there.
+
+### `if` conditions and the Monitor tool
+
+A hook handler can carry an `if` condition written in permission-rule syntax (for example
+`"if": "Bash(rm *)"`), which narrows a matched hook to calls that match the rule. Since
+v2.1.314 an `if` such as `Monitor(tail *)` matches the Monitor tool's shell commands the way
+`Bash(tail *)` matches Bash's, and hooks matching `Bash` now also run on shell commands
+started by the Monitor tool; before v2.1.314 they did not gate those commands. For
+Monitor-started commands a hook can block or ask, but cannot approve or rewrite them.
+**[UNVERIFIED: the `if` field's full scope (which events honour it) and whether `Monitor` is
+a matcher name in its own right; the changelog gives only these two bullets. Settle on
+/docs/en/hooks.]**
 
 ---
 

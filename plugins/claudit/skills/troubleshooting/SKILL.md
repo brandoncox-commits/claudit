@@ -12,7 +12,7 @@ user-invocable: false
 Diagnostic patterns for Claude Code issues across skills, agents, MCP, hooks, and plugins.
 
 Verified on 2026-10-15 against code.claude.com/docs/en/troubleshooting, /settings and the
-pages each row concerns — 1 open claim, marked **[UNCONFIRMED]** inline. Rows are
+pages each row concerns; re-audited 2026-10-30 (angle-bracket row corrected, PowerShell hook row added; stamp not renewed) — 2 open claims, marked **[UNCONFIRMED]** or **[UNVERIFIED]** inline. Rows are
 starting hypotheses to confirm against the user's actual setup, not verdicts. The update
 commands under Diagnostic Commands were verified against /setup on 2026-10-15.
 
@@ -28,7 +28,7 @@ commands under Diagnostic Commands were verified against /setup on 2026-10-15.
 | Skill changes not applied | Stale plugin asset, or a `--plugin-dir` plugin | `SKILL.md` text in a skills directory hot-reloads automatically. For a skill folder that is also a plugin, changes to `hooks/`, `.mcp.json`, `agents/` or `output-styles/` need `/reload-plugins`, and so does any edit to a plugin loaded with `--plugin-dir` |
 | Wrong file name | `skill.md` or `SKILL.MD` | Name it exactly `SKILL.md` (whether other casings load is **[UNCONFIRMED]**) |
 | Folder name awkward to invoke | Spaces or capitals | Use kebab-case: `my-skill` not `My Skill` (a convention; the docs state no character or case rule for skill folders, only that the folder name `synced` is reserved) |
-| Angle brackets render badly in a synced skill | Used `<` or `>` in `description` | Escape or remove them. The docs describe this only for display text on claude.ai-synced skills; no error behaviour for local frontmatter is documented |
+| Angle brackets show as `&lt;` / `&gt;` in a skill description | Used `<` or `>` in `description` or `when_to_use` | Claude Code displays them as `&lt;` and `&gt;`. Use square brackets (`[branch]`) or move the placeholder to `argument-hint: <branch>`. For skills synced from claude.ai, Claude Code (v2.1.228+) also escapes angle brackets in text that reaches Claude **[UNVERIFIED: the docs describe that escaping only for synced skills, not local ones]** |
 | Skill conflicts with another | Same name at different scopes | Higher priority wins: enterprise > user > project. Plugin skills are namespaced and do not collide |
 | `$ARGUMENTS` not working | Not in SKILL.md body | Add `$ARGUMENTS` in body or it auto-appends at end |
 | Skill can't be preloaded into an agent | It sets `disable-model-invocation: true` | Such skills cannot be preloaded via `skills:` |
@@ -72,6 +72,7 @@ commands under Diagnostic Commands were verified against /setup on 2026-10-15.
 |---------|-------------|-----|
 | Hook never fires | Wrong event name, or a matcher in the wrong case | Check: `PreToolUse`, `PostToolUse`, `Stop`, etc. Matcher matching is case-sensitive: `Bash`, not `bash` |
 | Hook fires but doesn't block | Exit code not 2 | Use explicit `exit 2`; `exit 1` doesn't block |
+| PowerShell hook exits 2 but doesn't block | Claude Code older than v2.1.309 | Update Claude Code; on Windows without Git for Windows, `PreToolUse` and `PermissionRequest` PowerShell hooks also failed open before v2.1.309 |
 | jq: field not found | Wrong JSON path | Debug: `cat > /tmp/hook.json` to inspect stdin |
 | Command not found | Binary not in PATH | Use full path |
 | Stderr not reaching Claude | Missing exit 2 | Block with `exit 2` for stderr to become feedback |
